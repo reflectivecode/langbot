@@ -15,7 +15,7 @@ WORKDIR /app
 COPY --from=build-env /app/web/out ./
 COPY scripts /usr/local/bin/
 
-ENV PING=http://localhost/health
+ENV PING=http://localhost/api/health
 
 EXPOSE 80
 
