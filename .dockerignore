@@ -1,0 +1,7 @@
+*
+
+!app/
+!scripts/
+
+app/*/bin
+app/*/obj

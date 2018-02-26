@@ -1,0 +1,8 @@
+templates:
+  - id:   one-does-not-simply
+    file: one-does-not-simply.jpg
+    name: One Does Not Simply
+
+  - id:   success-kid
+    file: success-kid.jpg
+    name: Success Kid
