@@ -5,7 +5,8 @@ WORKDIR /app
 
 COPY ./app/ ./
 
-RUN dotnet publish -c Release -o out
+RUN dotnet test tests \
+ && dotnet publish -c Release -o out
 
 # build runtime image
 FROM microsoft/aspnetcore:2.0
