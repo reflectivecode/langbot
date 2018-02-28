@@ -25,8 +25,8 @@ namespace LangBot.Web.Controllers
         {
             if (_imageUtility.ImageHash(request.Image) != request.Hash) throw new SlackException("Invalid validation hash");
             var model = _imageUtility.DeserializeImage(request.Image);
-            var image = await _service.Render(model);
-            return File(image, "image/jpeg");
+            var (image, mimeType) = await _service.Render(model);
+            return File(image, mimeType);
         }
     }
 }

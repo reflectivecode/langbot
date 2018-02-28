@@ -4,12 +4,18 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
+using LangBot.Web.Enums;
 using LangBot.Web.Models;
+using LangBot.Web.Slack;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing;
 using SixLabors.ImageSharp.Drawing.Brushes;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Bmp;
+using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.Primitives;
 
@@ -26,24 +32,18 @@ namespace LangBot.Web.Services
             _templateService = templateService;
         }
 
-        public async Task<byte[]> Render(ImageModel model)
+        public async Task<(byte[] data, string mimeType)> Render(ImageModel model)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
 
-            var imagePath = await _templateService.GetTemplatePath(model.ImageId);
+            var config = await _templateService.GetTemplates();
+            var template = config.Templates.FirstOrDefault(x => x.Id == model.ImageId) ?? throw new SlackException("Template id not found: {id}");
+            var imagePath = _templateService.GetTemplatePath(template);
             var fontPath = _templateService.GetFontPath();
             var font = new FontCollection().Install(fontPath).CreateFont(10, FontStyle.Regular);
-
-            var boxes = model.Boxes.ToList();
-            boxes.Add(new ImageModel.Box
-            {
-                Text = "LangBot",
-                X = .5,
-                Y = 98,
-                Height = 2,
-                Width = 10,
-                Vertical = ImageModel.Alignment.Bottom,
-            });
+            var boxes = model.Boxes.Prepend(template.Watermark ?? config.TemplateDefaults.Watermark).ToList();
+            var encoder = GetEncoder(template, config);
+            var mimeType = GetMimeType(template, config);
 
             using (var image = Image.Load(imagePath))
             {
@@ -51,67 +51,103 @@ namespace LangBot.Web.Services
 
                 using (var stream = new MemoryStream())
                 {
-                    image.SaveAsJpeg(stream, new JpegEncoder() { Quality = 80 });
-                    return stream.ToArray();
+                    image.Save(stream, encoder);
+                    return (stream.ToArray(), mimeType);
                 }
             }
         }
-
-        public static void DrawTextBoxes<TPixel>(Image<TPixel> image, Font font, IEnumerable<ImageModel.Box> boxes) where TPixel : struct, IPixel<TPixel>
+        public static void DrawTextBoxes<TPixel>(Image<TPixel> image, Font font, IEnumerable<TextBox> boxes) where TPixel : struct, IPixel<TPixel>
         {
             image.Mutate(context =>
             {
                 foreach (var box in boxes)
                 {
-                    var boxX = (float)(image.Width * box.X / 100);
-                    var boxY = (float)(image.Height * box.Y / 100);
-                    var boxWidth = (float)(image.Width * box.Width / 100);
-                    var boxHeight = (float)(image.Height * box.Height / 100);
-                    var scaledFont = ScaleFont(new Font(font, image.Height / 8), box.Text, boxWidth - 2 * outlineSize, boxHeight - 2 * outlineSize);
+                    var boxBounds = new RectangleF(
+                        x: (float)(image.Width * box.X / 100),
+                        y: (float)(image.Height * box.Y / 100),
+                        width: (float)(image.Width * box.Width / 100),
+                        height: (float)(image.Height * box.Height / 100)
+                    );
+                    var scaledFont = ScaleFont(new Font(font, image.Height / 8), box.Text, boxBounds.Width - 2 * outlineSize, boxBounds.Height - 2 * outlineSize);
                     var lineColor = ColorBuilder<TPixel>.FromRGBA(box.LineColor.R, box.LineColor.G, box.LineColor.B, box.LineColor.A);
                     var fillColor = ColorBuilder<TPixel>.FromRGBA(box.FillColor.R, box.FillColor.G, box.FillColor.B, box.FillColor.A);
 
                     var textBounds = TextMeasurer.MeasureBounds(box.Text, new RendererOptions(scaledFont)
                     {
-                        WrappingWidth = boxWidth,
-                        HorizontalAlignment = HorizontalAlignment.Center,
+                        WrappingWidth = boxBounds.Width,
+                        HorizontalAlignment = ConvertHorizontalAlignment(box.Horizontal),
                     });
 
-                    var center = new PointF(
-                        boxX,
-                        box.Vertical == ImageModel.Alignment.Top ? boxY - textBounds.Top :
-                        box.Vertical == ImageModel.Alignment.Bottom ? boxY - textBounds.Top + boxHeight - textBounds.Height :
-                        boxY - textBounds.Top + boxHeight / 2 - textBounds.Height / 2
-                    );
-
+                    var drawLocation = GetLocation(box, boxBounds, textBounds);
                     var outlines = new[]
                     {
-                        new PointF(center.X + outlineSize, center.Y + outlineSize),
-                        new PointF(center.X + outlineSize, center.Y - outlineSize),
-                        new PointF(center.X + outlineSize, center.Y),
-                        new PointF(center.X - outlineSize, center.Y + outlineSize),
-                        new PointF(center.X - outlineSize, center.Y - outlineSize),
-                        new PointF(center.X - outlineSize, center.Y),
-                        new PointF(center.X, center.Y - outlineSize),
-                        new PointF(center.X, center.Y + outlineSize),
+                        new PointF(drawLocation.X + outlineSize, drawLocation.Y + outlineSize),
+                        new PointF(drawLocation.X + outlineSize, drawLocation.Y - outlineSize),
+                        new PointF(drawLocation.X + outlineSize, drawLocation.Y),
+                        new PointF(drawLocation.X - outlineSize, drawLocation.Y + outlineSize),
+                        new PointF(drawLocation.X - outlineSize, drawLocation.Y - outlineSize),
+                        new PointF(drawLocation.X - outlineSize, drawLocation.Y),
+                        new PointF(drawLocation.X, drawLocation.Y - outlineSize),
+                        new PointF(drawLocation.X, drawLocation.Y + outlineSize),
                     };
 
                     foreach (var outline in outlines)
                     {
                         context.DrawText(box.Text, scaledFont, lineColor, outline, new TextGraphicsOptions(true)
                         {
-                            WrapTextWidth = boxWidth,
-                            HorizontalAlignment = HorizontalAlignment.Center,
+                            WrapTextWidth = boxBounds.Width,
+                            HorizontalAlignment = ConvertHorizontalAlignment(box.Horizontal),
                         });
                     }
 
-                    context.DrawText(box.Text, scaledFont, fillColor, center, new TextGraphicsOptions(true)
+                    context.DrawText(box.Text, scaledFont, fillColor, drawLocation, new TextGraphicsOptions(true)
                     {
-                        WrapTextWidth = boxWidth,
-                        HorizontalAlignment = HorizontalAlignment.Center,
+                        WrapTextWidth = boxBounds.Width,
+                        HorizontalAlignment = ConvertHorizontalAlignment(box.Horizontal),
                     });
                 }
             });
+        }
+
+        private static PointF GetLocation(TextBox box, RectangleF boxBounds, RectangleF textBounds)
+        {
+            return new PointF(
+                x: GetLocationX(box.Horizontal, boxBounds, textBounds),
+                y: GetLocationY(box.Vertical, boxBounds, textBounds)
+            );
+        }
+
+        private static float GetLocationX(AlignmentH alignment, RectangleF boxBounds, RectangleF textBounds)
+        {
+            switch (alignment)
+            {
+                case AlignmentH.Left: return boxBounds.X - textBounds.X;
+                case AlignmentH.Right: return boxBounds.X - textBounds.X + boxBounds.Width - textBounds.Width;
+                case AlignmentH.Center: return boxBounds.X - textBounds.X + boxBounds.Width / 2 - textBounds.Width / 2;
+                default: throw new ArgumentOutOfRangeException(nameof(alignment));
+            }
+        }
+
+        private static float GetLocationY(AlignmentV alignment, RectangleF boxBounds, RectangleF textBounds)
+        {
+            switch (alignment)
+            {
+                case AlignmentV.Top: return boxBounds.Y - textBounds.Y;
+                case AlignmentV.Bottom: return boxBounds.Y - textBounds.Y + boxBounds.Height - textBounds.Height;
+                case AlignmentV.Center: return boxBounds.Y - textBounds.Y + boxBounds.Height / 2 - textBounds.Height / 2;
+                default: throw new ArgumentOutOfRangeException(nameof(alignment));
+            }
+        }
+
+        private static HorizontalAlignment ConvertHorizontalAlignment(AlignmentH alignment)
+        {
+            switch (alignment)
+            {
+                case AlignmentH.Left: return HorizontalAlignment.Left;
+                case AlignmentH.Right: return HorizontalAlignment.Right;
+                case AlignmentH.Center: return HorizontalAlignment.Center;
+                default: throw new ArgumentOutOfRangeException(nameof(alignment));
+            }
         }
 
         public static Font ScaleFont(Font font, string text, float targetWidth, float targetHeight)
@@ -132,6 +168,52 @@ namespace LangBot.Web.Services
             }
 
             return new Font(font, minFontSize);
+        }
+
+        private static IImageEncoder GetEncoder(TemplateConfig.Template template, TemplateConfig config)
+        {
+            switch ((template.Format ?? config.TemplateDefaults.Format).ToUpperInvariant())
+            {
+                case "JPG":
+                case "JPEG":
+                    return new JpegEncoder()
+                    {
+                        IgnoreMetadata = true,
+                        Quality = template.Quality ?? config.TemplateDefaults.Quality ?? 90
+                    };
+                case "PNG":
+                    return new PngEncoder()
+                    {
+                        IgnoreMetadata = true
+                    };
+                case "BMP":
+                    return new BmpEncoder();
+                case "GIF":
+                    return new GifEncoder()
+                    {
+                        IgnoreMetadata = true
+                    };
+                default:
+                    throw new ArgumentOutOfRangeException("format");
+            }
+        }
+
+        private static string GetMimeType(TemplateConfig.Template template, TemplateConfig config)
+        {
+            switch ((template.Format ?? config.TemplateDefaults.Format).ToUpperInvariant())
+            {
+                case "JPG":
+                case "JPEG":
+                    return "image/jpeg";
+                case "PNG":
+                    return "image/png";
+                case "BMP":
+                    return "image/bmp";
+                case "GIF":
+                    return "image/gif";
+                default:
+                    throw new ArgumentOutOfRangeException("format");
+            }
         }
     }
 }

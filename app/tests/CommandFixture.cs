@@ -27,7 +27,7 @@ namespace LangBot.Tests
             response.EnsureSuccessStatusCode();
             Assert.Equal(HttpStatusCode.OK, response.StatusCode); Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var actual = JObject.Parse(await response.Content.ReadAsStringAsync());
-            var imageUrl = String.Format("http://localhost/api/Image?Image={0}&Hash=SLvqeGu8PQ5_VjFBxktQAOW75js6aZ-OucXePjkY-1E", Base64UrlEncode(new
+            var imageUrl = String.Format("http://localhost/api/Image?Image={0}&Hash=1wkdvuo-3EdNW7H0xAibXIVmvY1TLNA2B5EGuQwHPj0", Base64UrlEncode(new
             {
                 image_id= "one-does-not-simply",
                 boxes = new []
@@ -39,7 +39,8 @@ namespace LangBot.Tests
                         y = 2.5,
                         width = 90.0,
                         height = 25.0,
-                        vertical = 0,
+                        vertical = "Top",
+                        horizontal = "Center",
                         fill_color = "White",
                         line_color = "Black",
                     },
@@ -50,7 +51,8 @@ namespace LangBot.Tests
                         y = 72.5,
                         width = 90.0,
                         height = 25.0,
-                        vertical = 2,
+                        vertical = "Bottom",
+                        horizontal = "Center",
                         fill_color = "White",
                         line_color = "Black",
                     }
@@ -104,6 +106,17 @@ namespace LangBot.Tests
                                         {
                                             new
                                             {
+                                                text = "Distracted Boyfriend",
+                                                value = Base64UrlEncode(new
+                                                {
+                                                    text = "This is a test",
+                                                    template_id = "distracted-boyfriend",
+                                                    user_id = "U2147483697",
+                                                    anonymous = false
+                                                })
+                                            },
+                                            new
+                                            {
                                                 text = "One Does Not Simply",
                                                 value = Base64UrlEncode(new
                                                 {
@@ -113,17 +126,6 @@ namespace LangBot.Tests
                                                     anonymous = false
                                                 }),
                                                 description = "(selected)"
-                                            },
-                                            new
-                                            {
-                                                text = "Success Kid",
-                                                value = Base64UrlEncode(new
-                                                {
-                                                    text = "This is a test",
-                                                    template_id = "success-kid",
-                                                    user_id = "U2147483697",
-                                                    anonymous = false
-                                                })
                                             },
                                         }
                                     },
@@ -158,6 +160,20 @@ namespace LangBot.Tests
                                         }
                                     }
                                 }
+                            },
+                            new
+                            {
+                                name = "switch",
+                                style = "default",
+                                text = "Next",
+                                type = "button",
+                                value = Base64UrlEncode(new
+                                {
+                                    text = "This is a test",
+                                    template_id = "distracted-boyfriend",
+                                    user_id = "U2147483697",
+                                    anonymous = false
+                                }),
                             },
                             new
                             {

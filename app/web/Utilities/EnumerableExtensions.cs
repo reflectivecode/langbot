@@ -33,5 +33,27 @@ namespace LangBot.Web.Utilities
                 list.Add(value);
             return list;
         }
+
+        public static IEnumerable<TOut> SelectWithIndex<TIn, TOut>(this IEnumerable<TIn> collection, Func<TIn, int, TOut> selector)
+        {
+            if (collection == null) throw new ArgumentNullException(nameof(collection));
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
+
+            int index = -1;
+            foreach (var item in collection)
+            {
+                index++;
+                yield return selector(item, index);
+            }
+        }
+
+        public static T GetItemAfter<T>(this IList<T> collection, T item)
+        {
+            if (collection == null) throw new ArgumentNullException(nameof(collection));
+
+            var index = collection.IndexOf(item);
+            var nextIndex = (index + 1) % collection.Count;
+            return collection[nextIndex];
+        }
     }
 }

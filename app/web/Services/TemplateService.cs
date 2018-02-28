@@ -6,6 +6,7 @@ using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using LangBot.Web.Models;
 using LangBot.Web.Slack;
+using LangBot.Web.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using YamlDotNet.Serialization;
@@ -31,27 +32,17 @@ namespace LangBot.Web.Services
             {
                 var deserializer = new DeserializerBuilder()
                     .WithNamingConvention(new CamelCaseNamingConvention())
+                    .WithTypeConverter(new YamlColorConverter())
                     .Build();
 
                 return deserializer.Deserialize<TemplateConfig>(reader);
             }
         }
 
-        public async Task<TemplateConfig.Template> GetTemplate(string id)
+        public string GetTemplatePath(TemplateConfig.Template template)
         {
-            if (id == null) throw new ArgumentNullException(nameof(id));
+            if (template == null) throw new ArgumentNullException(nameof(template));
 
-            var config = await GetTemplates();
-            var template = config.Templates.FirstOrDefault(x => x.Id == id);
-            if (template == null) throw new SlackException("Template id not found: {id}");
-            return template;
-        }
-
-        public async Task<string> GetTemplatePath(string id)
-        {
-            if (id == null) throw new ArgumentNullException(nameof(id));
-
-            var template = await GetTemplate(id);
             return Path.Combine(_env.ContentRootPath, _options.Value.ImageDirectory, template.File);
         }
 

@@ -1,8 +1,77 @@
 templates:
-  - id:   one-does-not-simply
+  -
+    id:   distracted-boyfriend
+    file: distracted-boyfriend.jpg
+    name: Distracted Boyfriend
+    boxes:
+      -
+        x:          31
+        y:          1
+        width:      47
+        height:     20
+        horizontal: Center
+        vertical:   Center
+        lineColor:  Black
+        fillColor:  White
+      -
+        x:          66
+        y:          39
+        width:      33
+        height:     43
+        horizontal: Center
+        vertical:   Center
+        lineColor:  Black
+        fillColor:  White
+      -
+        x:          2
+        y:          62
+        width:      53
+        height:     36
+        horizontal: Center
+        vertical:   Center
+        lineColor:  Black
+        fillColor:  White
+  -
+    id:   one-does-not-simply
     file: one-does-not-simply.jpg
     name: One Does Not Simply
-
-  - id:   success-kid
+    default: true
+  -
+    id:   success-kid
     file: success-kid.jpg
     name: Success Kid
+    privileged: true
+templateDefaults:
+  format:  jpg
+  quality: 95
+  boxes:
+    -
+      x:          5
+      y:          2.5
+      width:      90
+      height:     25
+      horizontal: Center
+      vertical:   Top
+      lineColor:  Black
+      fillColor:  White
+    -
+      x:          5
+      y:          72.5
+      width:      90
+      height:     25
+      horizontal: Center
+      vertical:   Bottom
+      lineColor:  Black
+      fillColor:  White
+  watermark:
+    text:       LangBot
+    x:          0.5
+    y:          98
+    width:      10
+    height:     2
+    horizontal: Left
+    vertical:   Bottom
+    lineColor:  Black
+    fillColor:  White
+privileged:
+ - TestUser

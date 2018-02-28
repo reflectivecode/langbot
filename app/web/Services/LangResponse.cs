@@ -36,37 +36,28 @@ namespace LangBot.Web.Services
 
         public async Task<Message> Preview(PreviewModel model)
         {
-            var templates = await _templateService.GetTemplates();
-            var template = GetTemplate(templates.Templates, model.TemplateId);
-            var textLines = SplitText(model.Text.ToUpper(), 2);
+            var config = await _templateService.GetTemplates();
+            var isPrivilegedUser = config.Privileged.Contains(model.UserId);
+            var templates = config.Templates.Where(t => isPrivilegedUser || !t.Privileged).ToList();
+            var template = GetTemplate(templates, model.TemplateId);
+            var boxes = template.Boxes ?? config.TemplateDefaults.Boxes;
+            var textLines = SplitText(model.Text.ToUpper(), boxes.Count);
+
             var imageModel = new ImageModel
             {
                 ImageId = template.Id,
-                Boxes = new[]
+                Boxes = boxes.SelectWithIndex((box, i) => new TextBox
                 {
-                    new ImageModel.Box
-                    {
-                        Text = textLines[0],
-                        X = 5,
-                        Y = 2.5,
-                        Width = 90,
-                        Height = 25,
-                        Vertical = ImageModel.Alignment.Top,
-                        LineColor = Color.Black,
-                        FillColor = Color.White,
-                    },
-                    new ImageModel.Box
-                    {
-                        Text = textLines[1],
-                        X = 5,
-                        Y = 72.5,
-                        Width = 90,
-                        Height = 25,
-                        Vertical = ImageModel.Alignment.Bottom,
-                        LineColor = Color.Black,
-                        FillColor = Color.White,
-                    },
-                }
+                    Text = textLines[i],
+                    X = box.X,
+                    Y = box.Y,
+                    Width = box.Width,
+                    Height = box.Height,
+                    Vertical = box.Vertical,
+                    Horizontal = box.Horizontal,
+                    LineColor = box.LineColor,
+                    FillColor = box.FillColor,
+                }).ToList()
             };
 
             var imageRequest = _imageUtility.CreateRequest(imageModel);
@@ -119,7 +110,7 @@ namespace LangBot.Web.Services
                                     new MessageOptionGroup
                                     {
                                         Text = "Change Image",
-                                        Options = templates.Templates.OrderBy(t => t.Name).Select(t => new MessageOption
+                                        Options = templates.Select(t => new MessageOption
                                         {
                                             Text = t.Name,
                                             Description = t == template ? "(selected)" : null,
@@ -167,6 +158,19 @@ namespace LangBot.Web.Services
                             },
                             new MessageButton
                             {
+                                Name = "switch",
+                                Text = "Next",
+                                Style = MessageButtonStyles.Default,
+                                Value = _serializer.ObjectToBase64Url(new PreviewModel
+                                {
+                                    TemplateId = templates.GetItemAfter(template).Id,
+                                    Text = model.Text,
+                                    UserId = model.UserId,
+                                    Anonymous = model.Anonymous,
+                                })
+                            },
+                            new MessageButton
+                            {
                                 Name = "submit",
                                 Text = "Post",
                                 Style = MessageButtonStyles.Primary,
@@ -185,7 +189,7 @@ namespace LangBot.Web.Services
 
         private TemplateConfig.Template GetTemplate(IList<TemplateConfig.Template> templates, string id)
         {
-            if (String.IsNullOrEmpty(id)) return templates[0];
+            if (String.IsNullOrEmpty(id)) return templates.FirstOrDefault(x => x.Default == true) ?? templates.First();
             var template = templates.FirstOrDefault(t => t.Id == id);
             if (template == null) throw new SlackException($"Template not found: {id}");
             return template;
