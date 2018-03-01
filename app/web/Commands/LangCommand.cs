@@ -21,7 +21,7 @@ namespace LangBot.Web.Commands
 
             return await _langResponse.Preview(new PreviewModel
             {
-                Text = command.Text,
+                Text = command.Text ?? "",
                 UserId = command.UserId,
             });
         }
