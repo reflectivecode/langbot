@@ -6,9 +6,17 @@ namespace LangBot.Web
         {
             public const string Lang = "/lang";
         }
+
         public static class CallbackIds
         {
             public const string Meme = "meme";
+            public const string Edit = "edit";
+        }
+
+        public static class DialogElements
+        {
+            public const string Anonymous = "anonymous";
+            public const string Text = "text";
         }
 
         public static class ActionNames

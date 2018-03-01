@@ -10,22 +10,47 @@ namespace LangBot.Web.Slack
     {
         private readonly TokenValidation _tokenValidation;
         private readonly IEnumerable<IInteraction> _interactions;
+        private readonly IEnumerable<IDialog> _dialogs;
         private readonly Serializer _serializer;
         private readonly ILogger _logger;
 
-        public InteractionService(TokenValidation tokenValidation, IEnumerable<IInteraction> interactions, Serializer serializer, ILogger<InteractionService> logger)
+        public InteractionService(TokenValidation tokenValidation, IEnumerable<IInteraction> interactions, IEnumerable<IDialog> dialogs, Serializer serializer, ILogger<InteractionService> logger)
         {
             _tokenValidation = tokenValidation;
             _interactions = interactions;
+            _dialogs = dialogs;
             _serializer = serializer;
             _logger = logger;
         }
 
-        public async Task<Message> Respond(InteractionRequest request)
+        public async Task<IRequestResponse> Respond(InteractionRequest request)
         {
             _logger.LogDebug("Interaction payload: {0}", request.Payload);
-            var payload = _serializer.JsonToObject<InteractionPayload>(request.Payload);
+            var payload = _serializer.JsonToObject<IRequestPayload>(request.Payload);
             _tokenValidation.Validate(payload);
+
+            if (payload is InteractionPayload)
+                return await HandleInteraction(payload as InteractionPayload);
+            else
+                return await HandleDialog(payload as DialogPayload);
+        }
+
+        public async Task<DialogResponse> HandleDialog(DialogPayload payload)
+        {
+            foreach (var dialog in _dialogs)
+            {
+                var result = await dialog.Respond(payload);
+                if (result != null)
+                {
+                    _logger.LogDebug("dialog response: {0}", _serializer.ObjectToJson(result));
+                    return result;
+                }
+            }
+            throw new SlackException($"Unhandled dialog CallbackId: {payload.CallbackId}");
+        }
+
+        public async Task<Message> HandleInteraction(InteractionPayload payload)
+        {
             var model = new InteractionModel(payload);
             foreach (var interaction in _interactions)
             {
@@ -36,7 +61,7 @@ namespace LangBot.Web.Slack
                     return result;
                 }
             }
-            throw new SlackException($"Unhandled CallbackId: {model.CallbackId}, ActionName: {model.ActionName}");
+            throw new SlackException($"Unhandled interaction CallbackId: {model.CallbackId}, ActionName: {model.ActionName}");
         }
     }
 }

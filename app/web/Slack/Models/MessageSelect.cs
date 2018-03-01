@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using LangBot.Web.Enums;
 
 namespace LangBot.Web.Slack
 {

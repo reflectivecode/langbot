@@ -215,6 +215,29 @@ namespace LangBot.Web.Services
             });
         }
 
+        public async Task<Dialog> CreateDialog(EditOpenModel model)
+        {
+            var config = await _templateService.GetTemplates();
+            var isPrivilegedUser = config.Privileged.Contains(model.UserId);
+            var templates = config.Templates.Where(t => isPrivilegedUser || !t.Privileged).ToList();
+            var template = GetTemplate(templates, model.TemplateId);
+            var boxes = template.Boxes ?? config.TemplateDefaults.Boxes;
+            var textLines = SplitText(model.Text.ToUpper(), boxes.Count);
+
+            return new Dialog
+            {
+                CallbackId = Constants.CallbackIds.Edit,
+                Title = "LangBot Meme Editor",
+                Elements =
+                {
+                    new DialogText
+                    {
+
+                    }
+                }
+            };
+        }
+
         public Task<Message> Cancel()
         {
             return Task.FromResult(new Message

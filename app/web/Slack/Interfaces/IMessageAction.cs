@@ -1,5 +1,4 @@
 using System;
-using LangBot.Web.Enums;
 using Newtonsoft.Json;
 
 namespace LangBot.Web.Slack

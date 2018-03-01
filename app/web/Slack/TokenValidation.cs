@@ -11,8 +11,10 @@ namespace LangBot.Web.Slack
             _options = options;
         }
 
-        public void Validate(SlackRequest request)
+        public void Validate(ISlackRequest request)
         {
+            if (request == null) throw new System.ArgumentNullException(nameof(request));
+
             var token = _options.Value.Token;
             if (!string.IsNullOrEmpty(token) && request.Token != token)
                 throw new SlackException("Incorrect slack token received.");

@@ -16,9 +16,12 @@ namespace LangBot.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<Message> Post([FromForm] InteractionRequest request)
+        public async Task<IRequestResponse> Post([FromForm] InteractionRequest request)
         {
-            return await _service.Respond(request);
+            var response = await _service.Respond(request);
+            if (response.IsEmptyResponse())
+                return null;
+            return response;
         }
     }
 }
