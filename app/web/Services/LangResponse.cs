@@ -77,9 +77,11 @@ namespace LangBot.Web.Services
                     new MessageAttachment
                     {
                         Title = "This is a preview of your meme",
+                        Text = "_hint: use a semicolon to separate lines of text_",
                         Fallback = "Here you would choose to confirm posting your meme",
                         CallbackId = Constants.CallbackIds.Meme,
                         Color = "#3AA3E3",
+                        MrkdwnIn = new[] { "text" },
                         Actions = new IMessageAction []
                         {
                             new MessageButton

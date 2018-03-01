@@ -192,6 +192,8 @@ namespace LangBot.Tests
                         callback_id = "meme",
                         color = "#3AA3E3",
                         fallback = "Here you would choose to confirm posting your meme",
+                        mrkdwn_in = new[] { "text" },
+                        text = "_hint: use a semicolon to separate lines of text_",
                         title = "This is a preview of your meme",
                     }
                 },
