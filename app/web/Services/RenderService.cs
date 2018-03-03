@@ -11,6 +11,7 @@ using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing;
 using SixLabors.ImageSharp.Drawing.Brushes;
+using SixLabors.ImageSharp.Drawing.Pens;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Bmp;
 using SixLabors.ImageSharp.Formats.Gif;
@@ -71,6 +72,8 @@ namespace LangBot.Web.Services
                     var scaledFont = ScaleFont(new Font(font, image.Height / 8), box.Text, boxBounds.Width - 2 * outlineSize, boxBounds.Height - 2 * outlineSize);
                     var lineColor = ColorBuilder<TPixel>.FromRGBA(box.LineColor.R, box.LineColor.G, box.LineColor.B, box.LineColor.A);
                     var fillColor = ColorBuilder<TPixel>.FromRGBA(box.FillColor.R, box.FillColor.G, box.FillColor.B, box.FillColor.A);
+                    var pen = Pens.Solid(lineColor, 3f);
+                    var brush = Brushes.Solid(fillColor);
 
                     var textBounds = TextMeasurer.MeasureBounds(box.Text, new RendererOptions(scaledFont)
                     {
@@ -79,28 +82,16 @@ namespace LangBot.Web.Services
                     });
 
                     var drawLocation = GetLocation(box, boxBounds, textBounds);
-                    var outlines = new[]
-                    {
-                        new PointF(drawLocation.X + outlineSize, drawLocation.Y + outlineSize),
-                        new PointF(drawLocation.X + outlineSize, drawLocation.Y - outlineSize),
-                        new PointF(drawLocation.X + outlineSize, drawLocation.Y),
-                        new PointF(drawLocation.X - outlineSize, drawLocation.Y + outlineSize),
-                        new PointF(drawLocation.X - outlineSize, drawLocation.Y - outlineSize),
-                        new PointF(drawLocation.X - outlineSize, drawLocation.Y),
-                        new PointF(drawLocation.X, drawLocation.Y - outlineSize),
-                        new PointF(drawLocation.X, drawLocation.Y + outlineSize),
-                    };
 
-                    foreach (var outline in outlines)
+                    // draw outline
+                    context.DrawText(box.Text, scaledFont, pen, drawLocation, new TextGraphicsOptions(true)
                     {
-                        context.DrawText(box.Text, scaledFont, lineColor, outline, new TextGraphicsOptions(true)
-                        {
-                            WrapTextWidth = boxBounds.Width,
-                            HorizontalAlignment = ConvertHorizontalAlignment(box.Horizontal),
-                        });
-                    }
+                        WrapTextWidth = boxBounds.Width,
+                        HorizontalAlignment = ConvertHorizontalAlignment(box.Horizontal),
+                    });
 
-                    context.DrawText(box.Text, scaledFont, fillColor, drawLocation, new TextGraphicsOptions(true)
+                    // draw fill
+                    context.DrawText(box.Text, scaledFont, brush, drawLocation, new TextGraphicsOptions(true)
                     {
                         WrapTextWidth = boxBounds.Width,
                         HorizontalAlignment = ConvertHorizontalAlignment(box.Horizontal),
