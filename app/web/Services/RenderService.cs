@@ -70,6 +70,7 @@ namespace LangBot.Web.Services
                         height: (float)(image.Height * box.Height / 100)
                     );
                     var scaledFont = ScaleFont(new Font(font, image.Height / 8), box.Text, boxBounds.Width - 2 * outlineSize, boxBounds.Height - 2 * outlineSize);
+                    var wrapWidth = ScaleWidth(scaledFont, box.Text, boxBounds.Width - 2 * outlineSize, boxBounds.Height - 2 * outlineSize);
                     var lineColor = ColorBuilder<TPixel>.FromRGBA(box.LineColor.R, box.LineColor.G, box.LineColor.B, box.LineColor.A);
                     var fillColor = ColorBuilder<TPixel>.FromRGBA(box.FillColor.R, box.FillColor.G, box.FillColor.B, box.FillColor.A);
                     var pen = Pens.Solid(lineColor, 3f);
@@ -77,7 +78,7 @@ namespace LangBot.Web.Services
 
                     var textBounds = TextMeasurer.MeasureBounds(box.Text, new RendererOptions(scaledFont)
                     {
-                        WrappingWidth = boxBounds.Width,
+                        WrappingWidth = wrapWidth,
                         HorizontalAlignment = ConvertHorizontalAlignment(box.Horizontal),
                     });
 
@@ -86,14 +87,14 @@ namespace LangBot.Web.Services
                     // draw outline
                     context.DrawText(box.Text, scaledFont, pen, drawLocation, new TextGraphicsOptions(true)
                     {
-                        WrapTextWidth = boxBounds.Width,
+                        WrapTextWidth = wrapWidth,
                         HorizontalAlignment = ConvertHorizontalAlignment(box.Horizontal),
                     });
 
                     // draw fill
                     context.DrawText(box.Text, scaledFont, brush, drawLocation, new TextGraphicsOptions(true)
                     {
-                        WrapTextWidth = boxBounds.Width,
+                        WrapTextWidth = wrapWidth,
                         HorizontalAlignment = ConvertHorizontalAlignment(box.Horizontal),
                     });
                 }
@@ -159,6 +160,30 @@ namespace LangBot.Web.Services
             }
 
             return new Font(font, minFontSize);
+        }
+
+        public static float ScaleWidth(Font font, string text, float width, float maxHeight)
+        {
+            var initialHeight = TextMeasurer.MeasureBounds(text, new RendererOptions(font) { WrappingWidth = width }).Height;
+            var singleLineHeight = TextMeasurer.MeasureBounds(text, new RendererOptions(font)).Height;
+            if (initialHeight == singleLineHeight) return width;
+
+            var maxWidth = width;
+            var minWidth = 0f;
+
+            while (maxWidth - minWidth > 0.1f)
+            {
+                var actual = TextMeasurer.MeasureBounds(text, new RendererOptions(font) { WrappingWidth = width });
+
+                if (actual.Width > width || actual.Height > maxHeight || actual.Height > initialHeight + singleLineHeight / 2)
+                    minWidth = width;
+                else
+                    maxWidth = width;
+
+                width = (maxWidth + minWidth) / 2;
+            }
+
+            return maxWidth;
         }
 
         private static IImageEncoder GetEncoder(TemplateConfig.Template template, TemplateConfig config)
