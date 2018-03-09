@@ -38,7 +38,7 @@ namespace LangBot.Web.Services
             if (model == null) throw new ArgumentNullException(nameof(model));
 
             var config = await _templateService.GetTemplates();
-            var template = config.Templates.FirstOrDefault(x => x.Id == model.ImageId) ?? throw new SlackException("Template id not found: {id}");
+            var template = config.Templates.FirstOrDefault(x => x.Id == model.ImageId) ?? throw new SlackException($"Template id not found: {model.ImageId}");
             var imagePath = _templateService.GetTemplatePath(template);
             var fontPath = _templateService.GetFontPath();
             var font = new FontCollection().Install(fontPath).CreateFont(10, FontStyle.Regular);
