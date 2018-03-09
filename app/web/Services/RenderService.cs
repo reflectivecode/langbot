@@ -70,7 +70,7 @@ namespace LangBot.Web.Services
                         height: (float)(image.Height * box.Height / 100)
                     );
                     var scaledFont = ScaleFont(new Font(font, image.Height / 8), box.Text, boxBounds.Width - 2 * outlineSize, boxBounds.Height - 2 * outlineSize);
-                    var wrapWidth = ScaleWidth(scaledFont, box.Text, boxBounds.Width - 2 * outlineSize, boxBounds.Height - 2 * outlineSize);
+                    var wrapWidth = ScaleWidth(scaledFont, box.Text, boxBounds.Width - 2 * outlineSize);
                     var lineColor = ColorBuilder<TPixel>.FromRGBA(box.LineColor.R, box.LineColor.G, box.LineColor.B, box.LineColor.A);
                     var fillColor = ColorBuilder<TPixel>.FromRGBA(box.FillColor.R, box.FillColor.G, box.FillColor.B, box.FillColor.A);
                     var pen = Pens.Solid(lineColor, 3f);
@@ -162,7 +162,7 @@ namespace LangBot.Web.Services
             return new Font(font, minFontSize);
         }
 
-        public static float ScaleWidth(Font font, string text, float width, float maxHeight)
+        public static float ScaleWidth(Font font, string text, float width)
         {
             var initialHeight = TextMeasurer.MeasureBounds(text, new RendererOptions(font) { WrappingWidth = width }).Height;
             var singleLineHeight = TextMeasurer.MeasureBounds(text, new RendererOptions(font)).Height;
@@ -175,12 +175,12 @@ namespace LangBot.Web.Services
             {
                 var actual = TextMeasurer.MeasureBounds(text, new RendererOptions(font) { WrappingWidth = width });
 
-                if (actual.Width > width || actual.Height > maxHeight || actual.Height > initialHeight + singleLineHeight / 2)
+                if (actual.Width > width || actual.Height > initialHeight + singleLineHeight / 10f)
                     minWidth = width;
                 else
                     maxWidth = width;
 
-                width = (maxWidth + minWidth) / 2;
+                width = (maxWidth + minWidth) / 2f;
             }
 
             return maxWidth;
