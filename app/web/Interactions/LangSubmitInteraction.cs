@@ -1,29 +1,28 @@
 ﻿using System;
 using System.Threading.Tasks;
-using LangBot.Web.Models;
 using LangBot.Web.Services;
 using LangBot.Web.Slack;
 
 namespace LangBot.Web.Interactions
 {
-    public class LangSubmitInteraction : IInteraction
+    public class LangSubmitInteraction : BaseMemeInteraction
     {
         private readonly LangResponse _langResponse;
-        private readonly Serializer _serializer;
+        private readonly DatabaseRepo _databaseRepo;
 
-        public LangSubmitInteraction(LangResponse langResponse, Serializer serializer)
+        public LangSubmitInteraction(LangResponse langResponse, DatabaseRepo databaseRepo)
         {
             _langResponse = langResponse;
-            _serializer = serializer;
+            _databaseRepo = databaseRepo;
         }
 
-        public async Task<Message> Respond(InteractionModel model)
-        {
-            if (model.CallbackId != Constants.CallbackIds.Meme) return null;
-            if (model.ActionName != Constants.ActionNames.Submit) return null;
+        protected override string ActionName => Constants.ActionNames.Submit;
 
-            var value = _serializer.Base64UrlToObject<SubmitModel>(model.ActionValue);
-            return await _langResponse.Submit(value);
+        protected async override Task<Message> Respond(InteractionModel model, Guid guid)
+        {
+            var message = await _databaseRepo.PublishMessage(guid);
+            if (message == null || message.DeleteDate.HasValue) return await _langResponse.RenderDelete();
+            return await _langResponse.RenderPublished(message);
         }
     }
 }

@@ -1,19 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using System.IO.Compression;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Reflection;
 using Boilerplate.AspNetCore;
 using Boilerplate.AspNetCore.Filters;
+using DbUp;
+using DbUp.SQLite.Helpers;
 using LangBot.Web.Models;
-using LangBot.Web.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -51,8 +52,10 @@ namespace LangBot.Web
                 .AddResponseCompression()
                 .Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Optimal)
                 .Configure<LangOptions>(_configuration.GetSection("Lang"))
+                .Configure<DatabaseOptions>(_configuration.GetSection("Database"))
                 .Configure<Slack.Options>(_configuration.GetSection("Slack"))
-                .AddSingleton<JsonSerializerSettings>(new JsonSerializerSettings{
+                .AddSingleton(new JsonSerializerSettings
+                {
                     NullValueHandling = NullValueHandling.Ignore,
                     ContractResolver = new DefaultContractResolver
                     {
@@ -60,10 +63,22 @@ namespace LangBot.Web
                     }
                 })
                 .AddSingleton<IActionContextAccessor, ActionContextAccessor>()
-                .AddTransient<JsonSerializer>(serviceProvider => JsonSerializer.Create(serviceProvider.GetRequiredService<JsonSerializerSettings>()))
-                .AddScoped<IUrlHelper>(x => x
-                    .GetRequiredService<IUrlHelperFactory>()
-                    .GetUrlHelper(x.GetRequiredService<IActionContextAccessor>().ActionContext))
+                .AddTransient(serviceProvider =>
+                {
+                    var settings = serviceProvider.GetRequiredService<JsonSerializerSettings>();
+                    return JsonSerializer.Create(settings);
+                })
+                .AddTransient<IDbConnection>(serviceProvider =>
+                {
+                    var options = serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>();
+                    return new SqliteConnection(options.Value.ConnectionString);
+                })
+                .AddScoped(serviceProvider =>
+                {
+                    var urlHelperFactory = serviceProvider.GetRequiredService<IUrlHelperFactory>();
+                    var actionContextAccessor = serviceProvider.GetRequiredService<IActionContextAccessor>();
+                    return urlHelperFactory.GetUrlHelper(actionContextAccessor.ActionContext);
+                })
                 .AddMvc(config =>
                 {
                     config.Filters.Add(new ValidateModelStateAttribute());
@@ -95,7 +110,7 @@ namespace LangBot.Web
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder application)
+        public void Configure(IApplicationBuilder application, IApplicationLifetime lifetime)
         {
             application
                 .UseNoServerHttpHeader()
@@ -108,6 +123,25 @@ namespace LangBot.Web
                 .UseIfElse(_hostingEnvironment.IsDevelopment(), app => app.UseDeveloperExceptionPage(), app => app.UseInternalServerErrorOnException())
                 .UseResponseCompression()
                 .UseMvc();
+
+            lifetime.ApplicationStarted.Register(() =>
+            {
+                var options = application.ApplicationServices.GetRequiredService<IOptions<DatabaseOptions>>();
+                if (!String.IsNullOrEmpty(options.Value.DeleteOnStart))
+                    File.Delete(options.Value.DeleteOnStart);
+
+                var connection = application.ApplicationServices.GetRequiredService<IDbConnection>();
+                var shared = new SharedConnection(connection);
+                var upgrader = DeployChanges.To
+                            .SQLiteDatabase(shared)
+                            .WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
+                            .LogToConsole()
+                            .Build();
+
+                var result = upgrader.PerformUpgrade();
+                if (!result.Successful)
+                    throw result.Error;
+            });
         }
     }
 }

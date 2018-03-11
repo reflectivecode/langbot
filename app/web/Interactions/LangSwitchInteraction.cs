@@ -1,29 +1,44 @@
 ﻿using System;
 using System.Threading.Tasks;
-using LangBot.Web.Models;
 using LangBot.Web.Services;
 using LangBot.Web.Slack;
 
 namespace LangBot.Web.Interactions
 {
-    public class LangSwitchInteraction : IInteraction
+    public class LangSwitchInteraction : BaseMemeInteraction
     {
         private readonly LangResponse _langResponse;
-        private readonly Serializer _serializer;
+        private readonly DatabaseRepo _databaseRepo;
+        private readonly ConfigService _configService;
+        private readonly ImageUtility _imageUtility;
 
-        public LangSwitchInteraction(LangResponse langResponse, Serializer serializer)
+        public LangSwitchInteraction(LangResponse langResponse, DatabaseRepo databaseRepo, ConfigService configService, ImageUtility imageUtility)
         {
             _langResponse = langResponse;
-            _serializer = serializer;
+            _databaseRepo = databaseRepo;
+            _configService = configService;
+            _imageUtility = imageUtility;
         }
 
-        public async Task<Message> Respond(InteractionModel model)
-        {
-            if (model.CallbackId != Constants.CallbackIds.Meme) return null;
-            if (model.ActionName != Constants.ActionNames.Switch) return null;
+        protected override string ActionName => Constants.ActionNames.Switch;
 
-            var value = _serializer.Base64UrlToObject<PreviewModel>(model.ActionValue);
-            return await _langResponse.Preview(value);
+        protected async override Task<Message> Respond(InteractionModel model, Guid guid)
+        {
+            var originalMessage = await _databaseRepo.SelectMessage(guid);
+            if (originalMessage == null || originalMessage.PublishDate.HasValue || originalMessage.DeleteDate.HasValue) return await _langResponse.RenderDelete();
+
+            var template = await _configService.GetTemplate(model.ActionValue, originalMessage.UserId);
+            var imageUrl = await _imageUtility.GetImageUrl(originalMessage.Message, template);
+
+            var updatedMessage = await _databaseRepo.UpdatePreview(
+                guid: guid,
+                templateId: template.Id,
+                message: originalMessage.Message,
+                imageUrl: imageUrl);
+
+            if (updatedMessage == null || updatedMessage.PublishDate.HasValue || updatedMessage.DeleteDate.HasValue) return await _langResponse.RenderDelete();
+
+            return await _langResponse.RenderPreview(updatedMessage);
         }
     }
 }

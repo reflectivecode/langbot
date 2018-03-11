@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AssemblyName>LangBot.Web</AssemblyName>
+    <RootNamespace>LangBot</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,8 +12,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Data\Scripts\001-Create.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Boilerplate.AspNetCore" Version="3.0.0" />
+    <PackageReference Include="Dapper" Version="1.50.4" />
+    <PackageReference Include="dbup-sqlite" Version="4.0.0-beta0004" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="2.0.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0002" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta0002" />
     <PackageReference Include="YamlDotNet" Version="4.3.1" />
@@ -19,6 +28,10 @@
 
   <ItemGroup>
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Data\Scripts\001-Create.sql" />
   </ItemGroup>
 
 </Project>

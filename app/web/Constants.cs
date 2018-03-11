@@ -21,9 +21,18 @@ namespace LangBot.Web
 
         public static class ActionNames
         {
+            public const string UpVote = "up-vote";
+            public const string Flag = "flag";
+            public const string Edit = "edit";
             public const string Cancel = "cancel";
             public const string Submit = "submit";
             public const string Switch = "switch";
+        }
+
+        public static class Reactions
+        {
+            public const string UpVote = "up-vote";
+            public const string Flag = "flag";
         }
     }
 }

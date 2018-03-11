@@ -1,17 +1,11 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Drawing;
 using System.Linq;
-using System.Runtime.Serialization;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Boilerplate.AspNetCore;
 using LangBot.Web.Enums;
 using LangBot.Web.Models;
 using LangBot.Web.Slack;
-using LangBot.Web.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -21,27 +15,206 @@ namespace LangBot.Web.Services
     {
         private readonly IOptions<LangOptions> _options;
         private readonly IUrlHelper _urlHelper;
-        private readonly TemplateService _templateService;
+        private readonly ConfigService _templateService;
         private readonly ImageUtility _imageUtility;
         private readonly Serializer _serializer;
+        private readonly DatabaseRepo _repo;
+        private readonly TextSplitter _textSplitter;
 
-        public LangResponse(IUrlHelper urlHelper, IOptions<LangOptions> options, TemplateService templateService, ImageUtility imageUtility, Serializer serializer)
+        private static string GetText(MemeMessage message) => (message.IsAnonymous ? "_anonymous_" : $"<@{message.UserId}>") + $" used `{Constants.Commands.Lang}`";
+
+        public LangResponse(IUrlHelper urlHelper, IOptions<LangOptions> options, ConfigService templateService, ImageUtility imageUtility, Serializer serializer, DatabaseRepo repo, TextSplitter textSplitter)
         {
             _urlHelper = urlHelper;
             _options = options;
             _templateService = templateService;
             _imageUtility = imageUtility;
             _serializer = serializer;
+            _repo = repo;
+            _textSplitter = textSplitter;
         }
 
-        public async Task<Message> Preview(PreviewModel model)
+        public async Task<Message> CreateMessage(
+            string teamId,
+            string teamDomain,
+            string channelId,
+            string channelName,
+            string userId,
+            string userName,
+            string message)
         {
+            if (teamId == null) throw new ArgumentNullException(nameof(teamId));
+            if (teamDomain == null) throw new ArgumentNullException(nameof(teamDomain));
+            if (channelId == null) throw new ArgumentNullException(nameof(channelId));
+            if (channelName == null) throw new ArgumentNullException(nameof(channelName));
+            if (userId == null) throw new ArgumentNullException(nameof(userId));
+            if (userName == null) throw new ArgumentNullException(nameof(userName));
+            if (message == null) throw new ArgumentNullException(nameof(message));
+
+            var channelType = "unknown"; //TODO
+
+            var templates = await _templateService.GetTemplatesForUser(userId);
+            var template = templates.FirstOrDefault(x => x.Default == true) ?? templates.First();
+            var imageUrl = await _imageUtility.GetImageUrl(message, template);
+
+            var memeMessage = await _repo.InsertMessage(
+                teamId: teamId,
+                teamDomain: teamDomain,
+                channelId: channelId,
+                channelName: channelName,
+                channelType: channelType,
+                userId: userId,
+                userName: userName,
+                templateId: template.Id,
+                message: message,
+                imageUrl: imageUrl,
+                isAnonymous: false);
+
+            return await RenderPreview(memeMessage);
+        }
+
+        public async Task<Message> ChangeTemplate(Guid guid, bool isAnonymous)
+        {
+            var message = await _repo.UpdatePreview(
+                guid: guid,
+                isAnonymous: isAnonymous);
+
+            if (message == null || message.PublishDate.HasValue || message.DeleteDate.HasValue) return await RenderDelete();
+
+            return await RenderPreview(message);
+        }
+
+        public async Task<Message> ToggleUpVote(Guid guid, string userId, string userName)
+        {
+            if (userId == null) throw new ArgumentNullException(nameof(userId));
+            if (userName == null) throw new ArgumentNullException(nameof(userName));
+
+            var alreadyUpvoted = await _repo.HasReacted(guid, Constants.Reactions.UpVote, userId);
+            if (alreadyUpvoted)
+            {
+                var message = await _repo.RemoveReaction(guid, Constants.Reactions.UpVote, userId);
+                return await RenderPublished(message);
+            }
+            else
+            {
+                var message = await _repo.AddReaction(guid, Constants.Reactions.UpVote, userId, userName, null);
+                return await RenderPublished(message);
+            }
+        }
+
+        public async Task<Message> RenderPreview(MemeMessage message)
+        {
+            if (message == null) throw new ArgumentNullException(nameof(message));
+
             var config = await _templateService.GetTemplates();
-            var isPrivilegedUser = config.Privileged.Contains(model.UserId);
+            var isPrivilegedUser = config.Privileged.Contains(message.UserId);
             var templates = config.Templates.Where(t => isPrivilegedUser || !t.Privileged).ToList();
-            var template = GetTemplate(templates, model.TemplateId);
+            var template = GetTemplate(templates, message.TemplateId);
+
+            return new Message
+            {
+                ResponseType = MessageResponseTypes.Ephemeral,
+                Text = GetText(message),
+                Attachments = new[]
+                {
+                    new MessageAttachment
+                    {
+                        ImageUrl = message.ImageUrl,
+                        Fallback = message.Message,
+                    },
+                    new MessageAttachment
+                    {
+                        Title = "This is a preview of your meme",
+                        Text = "_hint: use a semicolon to separate lines of text_",
+                        Fallback = "Here you would choose to confirm posting your meme",
+                        CallbackId = Constants.CallbackIds.Meme,
+                        Color = "#3AA3E3",
+                        MrkdwnIn = new[] { "text" },
+                        Actions = new IMessageAction []
+                        {
+                            new MessageButton
+                            {
+                                Name = $"{Constants.ActionNames.Cancel}:{message.Guid}",
+                                Text = "Cancel",
+                            },
+                            new MessageSelect
+                            {
+                                Name = $"{Constants.ActionNames.Switch}:{message.Guid}",
+                                Text = "Image",
+                                SelectedOptions = new[]
+                                {
+                                     new MessageOption
+                                    {
+                                        Text = template.Name,
+                                        Value = template.Id,
+                                    }
+                                },
+                                OptionGroups = new[]
+                                {
+                                    new MessageOptionGroup
+                                    {
+                                        Text = "Change Image",
+                                        Options = templates.Select(t => new MessageOption
+                                        {
+                                            Text = t.Name,
+                                            Description = t == template ? "(selected)" : null,
+                                            Value = t.Id,
+                                        }).ToList()
+                                    },
+                                    new MessageOptionGroup
+                                    {
+                                        Text = "Change Anonymity",
+                                        Options = new[]
+                                        {
+                                            new MessageOption
+                                            {
+                                                Text = "Include username",
+                                                Description = message.IsAnonymous ? null : "(selected)",
+                                                Value = "false",
+                                            },
+                                            new MessageOption
+                                            {
+                                                Text = "Post anonymously",
+                                                Description = message.IsAnonymous ? "(selected)" : null,
+                                                Value = "true",
+                                            },
+                                        }
+                                    },
+                                }
+                            },
+                            new MessageButton
+                            {
+                                Name = $"${Constants.ActionNames.Switch}:{message.Guid}",
+                                Text = "Next",
+                                Style = MessageButtonStyles.Default,
+                                Value = templates.GetItemAfter(template).Id,
+                            },
+                            new MessageButton
+                            {
+                                Name = $"${Constants.ActionNames.Edit}:{message.Guid}",
+                                Text = "Edit",
+                                Style = MessageButtonStyles.Default,
+                            },
+                            new MessageButton
+                            {
+                                Name = $"{Constants.ActionNames.Submit}:{message.Guid}",
+                                Text = "Post",
+                                Style = MessageButtonStyles.Primary
+                            },
+                        }
+                    }
+                }
+            };
+        }
+
+        private string GetImageUrl(string message, TemplateConfig config, TemplateConfig.Template template)
+        {
+            if (message == null) throw new ArgumentNullException(nameof(message));
+            if (config == null) throw new ArgumentNullException(nameof(config));
+            if (template == null) throw new ArgumentNullException(nameof(template));
+
             var boxes = template.Boxes ?? config.TemplateDefaults.Boxes;
-            var textLines = SplitText(model.Text.ToUpper(), boxes.Count);
+            var textLines = _textSplitter.SplitText(message.ToUpper(), boxes.Count);
 
             var imageModel = new ImageModel
             {
@@ -62,131 +235,7 @@ namespace LangBot.Web.Services
 
             var imageRequest = _imageUtility.CreateRequest(imageModel);
             var imageUrl = _urlHelper.AbsoluteAction("Get", "Image", imageRequest);
-
-            return new Message
-            {
-                ResponseType = MessageResponseTypes.Ephemeral,
-                Text = model.Anonymous ? null : $"<@{model.UserId}> used `{Constants.Commands.Lang}`",
-                Attachments = new[]
-                {
-                    new MessageAttachment
-                    {
-                        ImageUrl = imageUrl,
-                        Fallback = model.Text,
-                    },
-                    new MessageAttachment
-                    {
-                        Title = "This is a preview of your meme",
-                        Text = "_hint: use a semicolon to separate lines of text_",
-                        Fallback = "Here you would choose to confirm posting your meme",
-                        CallbackId = Constants.CallbackIds.Meme,
-                        Color = "#3AA3E3",
-                        MrkdwnIn = new[] { "text" },
-                        Actions = new IMessageAction []
-                        {
-                            new MessageButton
-                            {
-                                Name = "cancel",
-                                Text = "Cancel",
-                            },
-                            new MessageSelect
-                            {
-                                Name = "switch",
-                                Text = "Image",
-                                SelectedOptions = new[]
-                                {
-                                     new MessageOption
-                                    {
-                                        Text = template.Name,
-                                        Value = _serializer.ObjectToBase64Url(new PreviewModel
-                                        {
-                                            TemplateId = template.Id,
-                                            Text = model.Text,
-                                            UserId = model.UserId,
-                                            Anonymous = model.Anonymous,
-                                        })
-                                    }
-                                },
-                                OptionGroups = new[]
-                                {
-                                    new MessageOptionGroup
-                                    {
-                                        Text = "Change Image",
-                                        Options = templates.Select(t => new MessageOption
-                                        {
-                                            Text = t.Name,
-                                            Description = t == template ? "(selected)" : null,
-                                            Value = _serializer.ObjectToBase64Url(new PreviewModel
-                                            {
-                                                TemplateId = t.Id,
-                                                Text = model.Text,
-                                                UserId = model.UserId,
-                                                Anonymous = model.Anonymous,
-                                            })
-                                        }).ToList()
-                                    },
-                                    new MessageOptionGroup
-                                    {
-                                        Text = "Change Anonymity",
-                                        Options = new[]
-                                        {
-                                            new MessageOption
-                                            {
-                                                Text = "Include username",
-                                                Description = model.Anonymous ? null : "(selected)",
-                                                Value = _serializer.ObjectToBase64Url(new PreviewModel
-                                                {
-                                                    TemplateId = template.Id,
-                                                    Text = model.Text,
-                                                    UserId = model.UserId,
-                                                    Anonymous = false,
-                                                }),
-                                            },
-                                            new MessageOption
-                                            {
-                                                Text = "Post anonymously",
-                                                Description = model.Anonymous ? "(selected)" : null,
-                                                Value = _serializer.ObjectToBase64Url(new PreviewModel
-                                                {
-                                                    TemplateId = template.Id,
-                                                    Text = model.Text,
-                                                    UserId = model.UserId,
-                                                    Anonymous = true,
-                                                }),
-                                            },
-                                        }
-                                    },
-                                }
-                            },
-                            new MessageButton
-                            {
-                                Name = "switch",
-                                Text = "Next",
-                                Style = MessageButtonStyles.Default,
-                                Value = _serializer.ObjectToBase64Url(new PreviewModel
-                                {
-                                    TemplateId = templates.GetItemAfter(template).Id,
-                                    Text = model.Text,
-                                    UserId = model.UserId,
-                                    Anonymous = model.Anonymous,
-                                })
-                            },
-                            new MessageButton
-                            {
-                                Name = "submit",
-                                Text = "Post",
-                                Style = MessageButtonStyles.Primary,
-                                Value = _serializer.ObjectToBase64Url(new SubmitModel
-                                {
-                                    ImageUrl = imageUrl,
-                                    Fallback = model.Text,
-                                    UserId = model.Anonymous ?  null : model.UserId,
-                                }),
-                            },
-                        }
-                    }
-                }
-            };
+            return imageUrl;
         }
 
         private TemplateConfig.Template GetTemplate(IList<TemplateConfig.Template> templates, string id)
@@ -197,144 +246,50 @@ namespace LangBot.Web.Services
             return template;
         }
 
-        public Task<Message> Submit(SubmitModel model)
+        public Task<Message> RenderPublished(MemeMessage message)
         {
+            if (message == null) throw new ArgumentNullException(nameof(message));
+
             return Task.FromResult(new Message
             {
-                DeleteOriginal = true,
                 ResponseType = MessageResponseTypes.InChannel,
-                Text = model.UserId == null ? null : $"<@{model.UserId}> used `{Constants.Commands.Lang}`",
+                Text = GetText(message),
                 Attachments = new List<MessageAttachment>()
                 {
                     new MessageAttachment
                     {
-                        Fallback = model.Fallback,
-                        ImageUrl = model.ImageUrl,
+                        Fallback = message.Message,
+                        ImageUrl = message.ImageUrl,
                     },
+                    new MessageAttachment
+                    {
+                        CallbackId = Constants.CallbackIds.Meme,
+                        Actions = new IMessageAction []
+                        {
+                            new MessageButton
+                            {
+                                Name = $"{Constants.ActionNames.UpVote}:{message.Guid}",
+                                Text = ":+1: Like" + (message.UpVoteCount > 0 ? message.UpVoteCount.ToString("(#)") : ""),
+                                Style = MessageButtonStyles.Primary,
+                            },
+                            new MessageButton
+                            {
+                                Name = $"{Constants.ActionNames.Flag}:{message.Guid}",
+                                Text = "Flag",
+                                Style = MessageButtonStyles.Danger,
+                            },
+                        }
+                    }
                 },
             });
         }
 
-        public async Task<Dialog> CreateDialog(EditOpenModel model)
-        {
-            var config = await _templateService.GetTemplates();
-            var isPrivilegedUser = config.Privileged.Contains(model.UserId);
-            var templates = config.Templates.Where(t => isPrivilegedUser || !t.Privileged).ToList();
-            var template = GetTemplate(templates, model.TemplateId);
-            var boxes = template.Boxes ?? config.TemplateDefaults.Boxes;
-            var textLines = SplitText(model.Text.ToUpper(), boxes.Count);
-
-            return new Dialog
-            {
-                CallbackId = Constants.CallbackIds.Edit,
-                Title = "LangBot Meme Editor",
-                Elements =
-                {
-                    new DialogText
-                    {
-
-                    }
-                }
-            };
-        }
-
-        public Task<Message> Cancel()
+        public Task<Message> RenderDelete()
         {
             return Task.FromResult(new Message
             {
                 DeleteOriginal = true,
             });
-        }
-
-        private static readonly Regex _whitespace = new Regex(@"\s+", RegexOptions.Compiled);
-
-        private IList<string> SplitText(string text, int count)
-        {
-            if (text == null) throw new ArgumentNullException(nameof(text));
-
-            text = _whitespace.Replace(text, " ").Trim();
-
-            if (count == 1)
-                return new[] { text };
-
-            if (text.Contains(";"))
-                return text.Split(';', count).TrimAll().PadToLength(count, "");
-
-            var words = _whitespace.Split(text);
-            if (words.Length <= count) return words.PadToLength(count, "");
-
-            TextLineStack best = null;
-            long bestCost = long.MaxValue;
-            foreach (var stack in AllSplits(words, count))
-            {
-                var cost = stack.Cost;
-                if (cost < bestCost)
-                {
-                    best = stack;
-                    bestCost = cost;
-                }
-            }
-
-            return best.GetLines().PadToLength(count, "");
-        }
-
-        private IEnumerable<TextLineStack> AllSplits(ArraySegment<string> words, int groupCount)
-        {
-            if (groupCount == 1)
-            {
-                yield return new TextLineStack(new TextLine(words));
-                yield break;
-            }
-
-            for (int take = 1; take <= words.Count - groupCount + 1; take++)
-            {
-                var line = new TextLine(words.Slice(0, take));
-                foreach (var tail in AllSplits(words.Slice(take), groupCount - 1))
-                    yield return new TextLineStack(line, tail);
-            }
-        }
-
-        private class TextLine
-        {
-            private readonly ArraySegment<string> _segment;
-
-            public int Length { get; }
-
-            public override string ToString() => String.Join(" ", _segment);
-
-            public TextLine(ArraySegment<string> segment)
-            {
-                _segment = segment;
-                Length = segment.Sum(x => x.Length) + segment.Count - 1;
-            }
-
-            public long Cost(int longestLine)
-            {
-                long deficit = longestLine - Length;
-                return deficit * deficit;
-            }
-        }
-
-        private class TextLineStack
-        {
-            private readonly ImmutableStack<TextLine> _stack;
-
-            public int LongestLine { get; }
-
-            public long Cost { get => _stack.Sum(x => x.Cost(LongestLine)); }
-            public IList<string> GetLines() => _stack.Select(x => x.ToString()).ToList();
-
-            public TextLineStack(TextLine line)
-            {
-                _stack = ImmutableStack.Create(line);
-                LongestLine = line.Length;
-            }
-
-            public TextLineStack(TextLine line, TextLineStack stack)
-            {
-                _stack = stack._stack.Push(line);
-                LongestLine = Math.Max(line.Length, stack.LongestLine);
-            }
         }
     }
 }
