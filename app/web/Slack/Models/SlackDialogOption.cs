@@ -1,8 +1,6 @@
-using System.Collections.Generic;
-
 namespace LangBot.Web.Slack
 {
-    public class DialogOption
+    public class SlackDialogOption
     {
         public string Label { get; set; }
         public string Value { get; set; }

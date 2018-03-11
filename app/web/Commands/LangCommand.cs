@@ -13,7 +13,7 @@ namespace LangBot.Web.Commands
             _langResponse = langResponse;
         }
 
-        public async Task<Message> Respond(CommandRequest command)
+        public async Task<SlackMessage> Respond(SlackCommandRequest command)
         {
             if (command.Command != Constants.Commands.Lang) return null;
 

@@ -34,7 +34,7 @@ namespace LangBot.Web.Services
             _textSplitter = textSplitter;
         }
 
-        public async Task<Message> CreateMessage(
+        public async Task<SlackMessage> CreateMessage(
             string teamId,
             string teamDomain,
             string channelId,
@@ -73,7 +73,7 @@ namespace LangBot.Web.Services
             return await RenderPreview(memeMessage);
         }
 
-        public async Task<Message> ChangeTemplate(Guid guid, bool isAnonymous)
+        public async Task<SlackMessage> ChangeTemplate(Guid guid, bool isAnonymous)
         {
             var message = await _repo.UpdatePreview(
                 guid: guid,
@@ -84,7 +84,7 @@ namespace LangBot.Web.Services
             return await RenderPreview(message);
         }
 
-        public async Task<Message> ToggleUpVote(Guid guid, string userId, string userName)
+        public async Task<SlackMessage> ToggleUpVote(Guid guid, string userId, string userName)
         {
             if (userId == null) throw new ArgumentNullException(nameof(userId));
             if (userName == null) throw new ArgumentNullException(nameof(userName));
@@ -102,7 +102,7 @@ namespace LangBot.Web.Services
             }
         }
 
-        public async Task<Message> RenderPreview(MemeMessage message)
+        public async Task<SlackMessage> RenderPreview(MemeMessage message)
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
 
@@ -111,18 +111,18 @@ namespace LangBot.Web.Services
             var templates = config.Templates.Where(t => isPrivilegedUser || !t.Privileged).ToList();
             var template = GetTemplate(templates, message.TemplateId);
 
-            return new Message
+            return new SlackMessage
             {
                 ResponseType = MessageResponseTypes.Ephemeral,
                 Text = GetText(message),
                 Attachments = new[]
                 {
-                    new MessageAttachment
+                    new SlackMessageAttachment
                     {
                         ImageUrl = message.ImageUrl,
                         Fallback = message.Message,
                     },
-                    new MessageAttachment
+                    new SlackMessageAttachment
                     {
                         Title = "This is a preview of your meme",
                         Text = "_hint: use a semicolon to separate lines of text_",
@@ -132,18 +132,18 @@ namespace LangBot.Web.Services
                         MrkdwnIn = new[] { "text" },
                         Actions = new IMessageAction []
                         {
-                            new MessageButton
+                            new SlackMessageButton
                             {
                                 Name = $"{Constants.ActionNames.Cancel}:{message.Guid}",
                                 Text = "Cancel",
                             },
-                            new MessageSelect
+                            new SlackMessageSelect
                             {
                                 Name = $"{Constants.ActionNames.Switch}:{message.Guid}",
                                 Text = "Image",
                                 SelectedOptions = new[]
                                 {
-                                     new MessageOption
+                                     new SlackMessageOption
                                     {
                                         Text = template.Name,
                                         Value = template.Id,
@@ -151,28 +151,28 @@ namespace LangBot.Web.Services
                                 },
                                 OptionGroups = new[]
                                 {
-                                    new MessageOptionGroup
+                                    new SlackMessageOptionGroup
                                     {
                                         Text = "Change Image",
-                                        Options = templates.Select(t => new MessageOption
+                                        Options = templates.Select(t => new SlackMessageOption
                                         {
                                             Text = t.Name,
                                             Description = t == template ? "(selected)" : null,
                                             Value = t.Id,
                                         }).ToList()
                                     },
-                                    new MessageOptionGroup
+                                    new SlackMessageOptionGroup
                                     {
                                         Text = "Change Anonymity",
                                         Options = new[]
                                         {
-                                            new MessageOption
+                                            new SlackMessageOption
                                             {
                                                 Text = "Include username",
                                                 Description = message.IsAnonymous ? null : "(selected)",
                                                 Value = "false",
                                             },
-                                            new MessageOption
+                                            new SlackMessageOption
                                             {
                                                 Text = "Post anonymously",
                                                 Description = message.IsAnonymous ? "(selected)" : null,
@@ -182,20 +182,20 @@ namespace LangBot.Web.Services
                                     },
                                 }
                             },
-                            new MessageButton
+                            new SlackMessageButton
                             {
                                 Name = $"${Constants.ActionNames.Switch}:{message.Guid}",
                                 Text = "Next",
                                 Style = MessageButtonStyles.Default,
                                 Value = templates.GetItemAfter(template).Id,
                             },
-                            new MessageButton
+                            new SlackMessageButton
                             {
                                 Name = $"${Constants.ActionNames.Edit}:{message.Guid}",
                                 Text = "Edit",
                                 Style = MessageButtonStyles.Default,
                             },
-                            new MessageButton
+                            new SlackMessageButton
                             {
                                 Name = $"{Constants.ActionNames.Submit}:{message.Guid}",
                                 Text = "Post",
@@ -246,33 +246,33 @@ namespace LangBot.Web.Services
             return template;
         }
 
-        public Task<Message> RenderPublished(MemeMessage message)
+        public Task<SlackMessage> RenderPublished(MemeMessage message)
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
 
-            return Task.FromResult(new Message
+            return Task.FromResult(new SlackMessage
             {
                 ResponseType = MessageResponseTypes.InChannel,
                 Text = GetText(message),
-                Attachments = new List<MessageAttachment>()
+                Attachments = new List<SlackMessageAttachment>()
                 {
-                    new MessageAttachment
+                    new SlackMessageAttachment
                     {
                         Fallback = message.Message,
                         ImageUrl = message.ImageUrl,
                     },
-                    new MessageAttachment
+                    new SlackMessageAttachment
                     {
                         CallbackId = Constants.CallbackIds.Meme,
                         Actions = new IMessageAction []
                         {
-                            new MessageButton
+                            new SlackMessageButton
                             {
                                 Name = $"{Constants.ActionNames.UpVote}:{message.Guid}",
                                 Text = ":+1: Like" + (message.UpVoteCount > 0 ? message.UpVoteCount.ToString("(#)") : ""),
                                 Style = MessageButtonStyles.Primary,
                             },
-                            new MessageButton
+                            new SlackMessageButton
                             {
                                 Name = $"{Constants.ActionNames.Flag}:{message.Guid}",
                                 Text = "Flag",
@@ -284,9 +284,9 @@ namespace LangBot.Web.Services
             });
         }
 
-        public Task<Message> RenderDelete()
+        public Task<SlackMessage> RenderDelete()
         {
-            return Task.FromResult(new Message
+            return Task.FromResult(new SlackMessage
             {
                 DeleteOriginal = true,
             });

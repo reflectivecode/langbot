@@ -1,6 +1,6 @@
 namespace LangBot.Web.Slack
 {
-    public class MessageOption
+    public class SlackMessageOption
     {
         public string Text { get; set; }
         public string Value { get; set; }

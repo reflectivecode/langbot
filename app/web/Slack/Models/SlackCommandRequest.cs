@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LangBot.Web.Slack
 {
-    public class CommandRequest : ISlackRequest
+    public class SlackCommandRequest : ISlackRequest
     {
         [FromForm(Name = "command"), Required] public string Command { get; set; }
         [FromForm(Name = "text")] public string Text { get; set; } = "";

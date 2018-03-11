@@ -10,8 +10,8 @@ namespace LangBot.Web.Slack
             var type = jObject["type"].Value<string>();
             switch (type)
             {
-                case null: return typeof(InteractionPayload);
-                case "dialog_submission": return typeof(DialogPayload);
+                case null: return typeof(SlackInteractionPayload);
+                case "dialog_submission": return typeof(SlackDialogPayload);
                 default: throw new SlackException($"Unexpected request type: {type}");
             }
         }

@@ -1,6 +1,6 @@
 namespace LangBot.Web.Slack
 {
-    public class DialogError
+    public class SlackDialogError
     {
         public string Error { get; set; }
         public string Name { get; set; }

@@ -10,8 +10,8 @@ namespace LangBot.Web.Slack
             var type = jObject["type"].Value<string>();
             switch (type)
             {
-                case "button": return typeof(MessageButton);
-                case "select": return typeof(MessageSelect);
+                case "button": return typeof(SlackMessageButton);
+                case "select": return typeof(SlackMessageSelect);
                 default: throw new SlackException($"Unexpected action type: {type}");
             }
         }

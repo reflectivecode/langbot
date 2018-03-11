@@ -18,7 +18,7 @@ namespace LangBot.Web.Interactions
 
         protected override string ActionName => Constants.ActionNames.Submit;
 
-        protected async override Task<Message> Respond(InteractionModel model, Guid guid)
+        protected async override Task<SlackMessage> Respond(InteractionModel model, Guid guid)
         {
             var message = await _databaseRepo.PublishMessage(guid);
             if (message == null || message.DeleteDate.HasValue) return await _langResponse.RenderDelete();

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using LangBot.Web.Services;
 using Microsoft.Extensions.Logging;
@@ -21,7 +20,7 @@ namespace LangBot.Web.Slack
             _logger = logger;
         }
 
-        public async Task<Message> Respond(CommandRequest request)
+        public async Task<SlackMessage> Respond(SlackCommandRequest request)
         {
             _logger.LogDebug("Command payload: {0}", _serializer.ObjectToJson(request));
             _tokenValidation.Validate(request);

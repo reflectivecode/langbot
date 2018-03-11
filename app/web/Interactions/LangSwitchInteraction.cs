@@ -22,7 +22,7 @@ namespace LangBot.Web.Interactions
 
         protected override string ActionName => Constants.ActionNames.Switch;
 
-        protected async override Task<Message> Respond(InteractionModel model, Guid guid)
+        protected async override Task<SlackMessage> Respond(InteractionModel model, Guid guid)
         {
             var originalMessage = await _databaseRepo.SelectMessage(guid);
             if (originalMessage == null || originalMessage.PublishDate.HasValue || originalMessage.DeleteDate.HasValue) return await _langResponse.RenderDelete();

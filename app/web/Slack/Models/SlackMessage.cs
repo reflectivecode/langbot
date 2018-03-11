@@ -1,11 +1,10 @@
-using System;
 using System.Collections.Generic;
 
 namespace LangBot.Web.Slack
 {
-    public class Message : IRequestResponse
+    public class SlackMessage : IRequestResponse
     {
-        public IList<MessageAttachment> Attachments { get; set; }
+        public IList<SlackMessageAttachment> Attachments { get; set; }
         public bool? DeleteOriginal { get; set; }
         public bool? ReplaceOriginal { get; set; }
         public MessageResponseTypes? ResponseType { get; set; }

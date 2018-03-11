@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using LangBot.Web.Services;
 using Microsoft.Extensions.Logging;
@@ -23,19 +22,19 @@ namespace LangBot.Web.Slack
             _logger = logger;
         }
 
-        public async Task<IRequestResponse> Respond(InteractionRequest request)
+        public async Task<IRequestResponse> Respond(SlackInteractionRequest request)
         {
             _logger.LogDebug("Interaction payload: {0}", request.Payload);
             var payload = _serializer.JsonToObject<IRequestPayload>(request.Payload);
             _tokenValidation.Validate(payload);
 
-            if (payload is InteractionPayload)
-                return await HandleInteraction(payload as InteractionPayload);
+            if (payload is SlackInteractionPayload)
+                return await HandleInteraction(payload as SlackInteractionPayload);
             else
-                return await HandleDialog(payload as DialogPayload);
+                return await HandleDialog(payload as SlackDialogPayload);
         }
 
-        public async Task<DialogResponse> HandleDialog(DialogPayload payload)
+        public async Task<SlackDialogResponse> HandleDialog(SlackDialogPayload payload)
         {
             foreach (var dialog in _dialogs)
             {
@@ -49,7 +48,7 @@ namespace LangBot.Web.Slack
             throw new SlackException($"Unhandled dialog CallbackId: {payload.CallbackId}");
         }
 
-        public async Task<Message> HandleInteraction(InteractionPayload payload)
+        public async Task<SlackMessage> HandleInteraction(SlackInteractionPayload payload)
         {
             var model = new InteractionModel(payload);
             foreach (var interaction in _interactions)

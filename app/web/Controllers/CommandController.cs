@@ -16,7 +16,7 @@ namespace LangBot.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<Message> Post([FromForm] CommandRequest request)
+        public async Task<SlackMessage> Post([FromForm] SlackCommandRequest request)
         {
             return await _service.Respond(request);
         }

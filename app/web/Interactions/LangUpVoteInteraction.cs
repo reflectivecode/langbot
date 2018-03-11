@@ -20,7 +20,7 @@ namespace LangBot.Web.Interactions
 
         protected override string ActionName => Constants.ActionNames.UpVote;
 
-        protected async override Task<Message> Respond(InteractionModel model, Guid guid)
+        protected async override Task<SlackMessage> Respond(InteractionModel model, Guid guid)
         {
             var alreadyUpvoted = await _databaseRepo.HasReacted(guid, Constants.Reactions.UpVote, model.Payload.User.Id);
             if (alreadyUpvoted)

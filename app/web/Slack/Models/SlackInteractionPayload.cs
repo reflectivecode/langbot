@@ -1,9 +1,8 @@
-using System;
 using System.Collections.Generic;
 
 namespace LangBot.Web.Slack
 {
-    public class InteractionPayload : IRequestPayload
+    public class SlackInteractionPayload : IRequestPayload
     {
         public IList<IMessageAction> Actions { get; set; }
         public string ActionTs { get; set; }

@@ -17,7 +17,7 @@ namespace LangBot.Web.Interactions
             _serializer = serializer;
         }
 
-        public async Task<Message> Respond(InteractionModel model)
+        public async Task<SlackMessage> Respond(InteractionModel model)
         {
             if (model.CallbackId != Constants.CallbackIds.Meme) return null;
             if (model.ActionName != Constants.ActionNames.Switch) return null;

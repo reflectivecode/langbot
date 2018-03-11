@@ -20,7 +20,7 @@ namespace LangBot.Web.Interactions
             _responseClient = responseClient;
         }
 
-        public async Task<DialogResponse> Respond(DialogPayload payload)
+        public async Task<SlackDialogResponse> Respond(SlackDialogPayload payload)
         {
             if (payload.CallbackId != Constants.CallbackIds.Edit) return null;
 
@@ -45,7 +45,7 @@ namespace LangBot.Web.Interactions
 
             await _responseClient.Post<object>(model.ResponseUrl, message);
 
-            return new DialogResponse();
+            return new SlackDialogResponse();
         }
     }
 }

@@ -8,9 +8,9 @@ namespace LangBot.Web.Interactions
     {
         protected abstract string ActionName { get; }
 
-        protected abstract Task<Message> Respond(InteractionModel model, Guid guid);
+        protected abstract Task<SlackMessage> Respond(InteractionModel model, Guid guid);
 
-        public async Task<Message> Respond(InteractionModel model)
+        public async Task<SlackMessage> Respond(InteractionModel model)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
 
