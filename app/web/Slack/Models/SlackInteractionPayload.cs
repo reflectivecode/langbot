@@ -9,5 +9,7 @@ namespace LangBot.Web.Slack
         public string CallbackId { get; set; }
         public string Token { get; set; }
         public SlackUser User { get; set; }
-    }
+
+        // Convenience Properties
+        public string ActionName => Actions[0].Name;        public string ActionValue => Actions[0].GetValue();    }
 }

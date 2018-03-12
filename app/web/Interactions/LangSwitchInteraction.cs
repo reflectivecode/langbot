@@ -22,12 +22,12 @@ namespace LangBot.Web.Interactions
 
         protected override string ActionName => Constants.ActionNames.Switch;
 
-        protected async override Task<SlackMessage> Respond(InteractionModel model, Guid guid)
+        protected async override Task<SlackMessage> Respond(SlackInteractionPayload payload, Guid guid)
         {
             var originalMessage = await _databaseRepo.SelectMessage(guid);
             if (originalMessage == null || originalMessage.PublishDate.HasValue || originalMessage.DeleteDate.HasValue) return await _langResponse.RenderDelete();
 
-            var template = await _configService.GetTemplate(model.ActionValue, originalMessage.UserId);
+            var template = await _configService.GetTemplate(payload.ActionValue, originalMessage.UserId);
             var imageUrl = await _imageUtility.GetImageUrl(originalMessage.Message, template);
 
             var updatedMessage = await _databaseRepo.UpdatePreview(

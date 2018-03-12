@@ -20,17 +20,17 @@ namespace LangBot.Web.Interactions
 
         protected override string ActionName => Constants.ActionNames.UpVote;
 
-        protected async override Task<SlackMessage> Respond(InteractionModel model, Guid guid)
+        protected async override Task<SlackMessage> Respond(SlackInteractionPayload payload, Guid guid)
         {
-            var alreadyUpvoted = await _databaseRepo.HasReacted(guid, Constants.Reactions.UpVote, model.Payload.User.Id);
+            var alreadyUpvoted = await _databaseRepo.HasReacted(guid, Constants.Reactions.UpVote, payload.User.Id);
             if (alreadyUpvoted)
             {
-                await _dialogService.CreateDialog(model.Payload.ActionTs, null);
+                await _dialogService.CreateDialog(payload.ActionTs, null);
                 return null;
             }
             else
             {
-                var message = await _databaseRepo.AddReaction(guid, Constants.Reactions.UpVote, model.Payload.User.Id, model.Payload.User.Name, null);
+                var message = await _databaseRepo.AddReaction(guid, Constants.Reactions.UpVote, payload.User.Id, payload.User.Name, null);
                 return await _langResponse.RenderPublished(message);
             }
         }

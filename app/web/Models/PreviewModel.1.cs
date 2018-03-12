@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace LangBot.Web.Models
 {
     public class EditOpenModel

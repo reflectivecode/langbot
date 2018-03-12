@@ -18,7 +18,7 @@ namespace LangBot.Web.Interactions
 
         protected override string ActionName => Constants.ActionNames.Cancel;
 
-        protected async override Task<SlackMessage> Respond(InteractionModel model, Guid guid)
+        protected async override Task<SlackMessage> Respond(SlackInteractionPayload payload, Guid guid)
         {
             await _databaseRepo.DeletePreview(guid);
             return await _langResponse.RenderDelete();

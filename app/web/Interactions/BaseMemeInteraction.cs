@@ -8,17 +8,17 @@ namespace LangBot.Web.Interactions
     {
         protected abstract string ActionName { get; }
 
-        protected abstract Task<SlackMessage> Respond(InteractionModel model, Guid guid);
+        protected abstract Task<SlackMessage> Respond(SlackInteractionPayload payload, Guid guid);
 
-        public async Task<SlackMessage> Respond(InteractionModel model)
+        public async Task<SlackMessage> Respond(SlackInteractionPayload payload)
         {
-            if (model == null) throw new ArgumentNullException(nameof(model));
+            if (payload == null) throw new ArgumentNullException(nameof(payload));
 
-            if (model.CallbackId != Constants.CallbackIds.Meme) return null;
-            if (String.IsNullOrEmpty(model.ActionName)) return null;
-            if (!model.ActionName.StartsWith(ActionName + ":")) return null;
+            if (payload.CallbackId != Constants.CallbackIds.Meme) return null;
+            if (String.IsNullOrEmpty(payload.ActionName)) return null;
+            if (!payload.ActionName.StartsWith(ActionName + ":")) return null;
             var guid = Guid.Parse(ActionName.Substring(ActionName.Length + 1));
-            return await Respond(model, guid);
+            return await Respond(payload, guid);
         }
     }
 }

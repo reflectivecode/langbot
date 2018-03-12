@@ -56,17 +56,16 @@ namespace LangBot.Web.Slack
         {
             if (payload == null) throw new System.ArgumentNullException(nameof(payload));
 
-            var model = new InteractionModel(payload);
             foreach (var interaction in _interactions)
             {
-                var result = await interaction.Respond(model);
+                var result = await interaction.Respond(payload);
                 if (result != null)
                 {
                     _logger.LogDebug("Interaction response: {0}", _serializer.ObjectToJson(result));
                     return result;
                 }
             }
-            throw new SlackException($"Unhandled interaction CallbackId: {model.CallbackId}, ActionName: {model.ActionName}");
+            throw new SlackException($"Unhandled interaction CallbackId: {payload.CallbackId}, ActionName: {payload.ActionName}");
         }
     }
 }

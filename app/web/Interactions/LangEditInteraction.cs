@@ -17,12 +17,12 @@ namespace LangBot.Web.Interactions
             _serializer = serializer;
         }
 
-        public async Task<SlackMessage> Respond(InteractionModel model)
+        public async Task<SlackMessage> Respond(SlackInteractionPayload payload)
         {
-            if (model.CallbackId != Constants.CallbackIds.Meme) return null;
-            if (model.ActionName != Constants.ActionNames.Switch) return null;
+            if (payload.CallbackId != Constants.CallbackIds.Meme) return null;
+            if (payload.ActionName != Constants.ActionNames.Switch) return null;
 
-            var value = _serializer.Base64UrlToObject<PreviewModel>(model.ActionValue);
+            var value = _serializer.Base64UrlToObject<PreviewModel>(payload.ActionValue);
             return await _langResponse.Preview(value);
         }
     }
