@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using LangBot.Web.Slack;
 
@@ -19,8 +18,7 @@ namespace LangBot.Web.Controllers
         public async Task<ISlackInteractionResponse> Post([FromForm] SlackInteractionRequest request)
         {
             var response = await _service.Respond(request);
-            if (response.IsEmptyResponse())
-                return null;
+            if (response.IsEmptyResponse()) return null;
             return response;
         }
     }

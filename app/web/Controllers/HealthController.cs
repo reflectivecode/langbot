@@ -1,6 +1,4 @@
-﻿using System.Data;
-using System.Threading.Tasks;
-using Dapper;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LangBot.Web.Controllers
@@ -8,17 +6,17 @@ namespace LangBot.Web.Controllers
     [Route("api/[controller]")]
     public class HealthController : Controller
     {
-        private readonly IDbConnection _connection;
+        private readonly DatabaseRepo _databaseRepo;
 
-        public HealthController(IDbConnection connection)
+        public HealthController(DatabaseRepo databaseRepo)
         {
-            _connection = connection;
+            _databaseRepo = databaseRepo;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAsync()
         {
-            var foo = await _connection.QueryAsync<dynamic>("SELECT * FROM Test;");
+            await _databaseRepo.Test();
             return Ok();
         }
     }
