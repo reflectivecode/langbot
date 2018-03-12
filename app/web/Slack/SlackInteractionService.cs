@@ -5,15 +5,15 @@ using Microsoft.Extensions.Logging;
 
 namespace LangBot.Web.Slack
 {
-    public class InteractionService
+    public class SlackInteractionService
     {
-        private readonly TokenValidation _tokenValidation;
-        private readonly IEnumerable<IInteraction> _interactions;
-        private readonly IEnumerable<IDialog> _dialogs;
+        private readonly SlackTokenValidator _tokenValidation;
+        private readonly IEnumerable<ISlackInteractionResponder> _interactions;
+        private readonly IEnumerable<ISlackDialogResponder> _dialogs;
         private readonly Serializer _serializer;
         private readonly ILogger _logger;
 
-        public InteractionService(TokenValidation tokenValidation, IEnumerable<IInteraction> interactions, IEnumerable<IDialog> dialogs, Serializer serializer, ILogger<InteractionService> logger)
+        public SlackInteractionService(SlackTokenValidator tokenValidation, IEnumerable<ISlackInteractionResponder> interactions, IEnumerable<ISlackDialogResponder> dialogs, Serializer serializer, ILogger<SlackInteractionService> logger)
         {
             _tokenValidation = tokenValidation;
             _interactions = interactions;
@@ -22,10 +22,12 @@ namespace LangBot.Web.Slack
             _logger = logger;
         }
 
-        public async Task<IRequestResponse> Respond(SlackInteractionRequest request)
+        public async Task<ISlackInteractionResponse> Respond(SlackInteractionRequest request)
         {
+            if (request == null) throw new System.ArgumentNullException(nameof(request));
+
             _logger.LogDebug("Interaction payload: {0}", request.Payload);
-            var payload = _serializer.JsonToObject<IRequestPayload>(request.Payload);
+            var payload = _serializer.JsonToObject<ISlackInteractionPayload>(request.Payload);
             _tokenValidation.Validate(payload);
 
             if (payload is SlackInteractionPayload)
@@ -36,6 +38,8 @@ namespace LangBot.Web.Slack
 
         public async Task<SlackDialogResponse> HandleDialog(SlackDialogPayload payload)
         {
+            if (payload == null) throw new System.ArgumentNullException(nameof(payload));
+
             foreach (var dialog in _dialogs)
             {
                 var result = await dialog.Respond(payload);
@@ -50,6 +54,8 @@ namespace LangBot.Web.Slack
 
         public async Task<SlackMessage> HandleInteraction(SlackInteractionPayload payload)
         {
+            if (payload == null) throw new System.ArgumentNullException(nameof(payload));
+
             var model = new InteractionModel(payload);
             foreach (var interaction in _interactions)
             {

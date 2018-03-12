@@ -4,7 +4,7 @@ using LangBot.Web.Slack;
 
 namespace LangBot.Web.Interactions
 {
-    public abstract class BaseMemeInteraction : IInteraction
+    public abstract class BaseMemeInteraction : ISlackInteractionResponder
     {
         protected abstract string ActionName { get; }
 

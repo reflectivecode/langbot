@@ -1,14 +1,13 @@
-using System;
 using Newtonsoft.Json;
 
 namespace LangBot.Web.Slack
 {
-    [JsonConverter(typeof(MessageActionConverter))]
-    public interface IMessageAction
+    [JsonConverter(typeof(SlackMessageActionConverter))]
+    public interface ISlackMessageAction
     {
         string Name { get; }
         string Text { get; }
-        MessageActionTypes Type { get; }
+        SlackMessageActionTypes Type { get; }
         string GetValue();
     }
 }

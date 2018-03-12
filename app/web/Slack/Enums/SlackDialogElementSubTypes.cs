@@ -5,7 +5,7 @@ using Newtonsoft.Json.Converters;
 namespace LangBot.Web.Slack
 {
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum DialogElementSunTypes
+    public enum SlackDialogElementSubTypes
     {
         Email,
         Number,

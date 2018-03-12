@@ -5,14 +5,14 @@ using Microsoft.Extensions.Logging;
 
 namespace LangBot.Web.Slack
 {
-    public class CommandService
+    public class SlackCommandService
     {
-        private readonly TokenValidation _tokenValidation;
-        private readonly IEnumerable<ICommand> _commands;
+        private readonly SlackTokenValidator _tokenValidation;
+        private readonly IEnumerable<ISlackCommandResponder> _commands;
         private readonly Serializer _serializer;
         private readonly ILogger _logger;
 
-        public CommandService(TokenValidation tokenValidation, IEnumerable<ICommand> commands, Serializer serializer, ILogger<CommandService> logger)
+        public SlackCommandService(SlackTokenValidator tokenValidation, IEnumerable<ISlackCommandResponder> commands, Serializer serializer, ILogger<SlackCommandService> logger)
         {
             _tokenValidation = tokenValidation;
             _commands = commands;
@@ -22,6 +22,8 @@ namespace LangBot.Web.Slack
 
         public async Task<SlackMessage> Respond(SlackCommandRequest request)
         {
+            if (request == null) throw new System.ArgumentNullException(nameof(request));
+
             _logger.LogDebug("Command payload: {0}", _serializer.ObjectToJson(request));
             _tokenValidation.Validate(request);
             foreach (var command in _commands)

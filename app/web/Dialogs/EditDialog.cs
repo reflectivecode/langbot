@@ -7,13 +7,13 @@ using LangBot.Web.Slack;
 
 namespace LangBot.Web.Interactions
 {
-    public class EditDialog : IDialog
+    public class EditDialog : ISlackDialogResponder
     {
         private readonly LangResponse _langResponse;
         private readonly Serializer _serializer;
-        private readonly ResponseClient _responseClient;
+        private readonly SlackResponseClient _responseClient;
 
-        public EditDialog(LangResponse langResponse, Serializer serializer, ResponseClient responseClient)
+        public EditDialog(LangResponse langResponse, Serializer serializer, SlackResponseClient responseClient)
         {
             _langResponse = langResponse;
             _serializer = serializer;

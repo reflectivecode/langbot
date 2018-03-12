@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 
 namespace LangBot.Web.Slack
 {
-    public abstract class BaseReadConverter<T> : JsonConverter
+    public abstract class SlackBaseReadConverter<T> : JsonConverter
     {
         public override bool CanWrite => false;
         public override bool CanRead => true;

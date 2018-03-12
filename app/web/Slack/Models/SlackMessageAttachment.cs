@@ -4,7 +4,7 @@ namespace LangBot.Web.Slack
 {
     public class SlackMessageAttachment
     {
-        public IList<IMessageAction> Actions { get; set; }
+        public IList<ISlackMessageAction> Actions { get; set; }
         public string CallbackId { get; set; }
         public string Color { get; set; }
         public string Fallback { get; set; }

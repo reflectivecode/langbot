@@ -2,7 +2,7 @@
 
 namespace LangBot.Web.Slack
 {
-    public interface ICommand
+    public interface ISlackCommandResponder
     {
         Task<SlackMessage> Respond(SlackCommandRequest command);
     }

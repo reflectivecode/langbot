@@ -6,10 +6,9 @@ using Newtonsoft.Json.Converters;
 namespace LangBot.Web.Slack
 {
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum MessageButtonStyles
+    public enum SlackMessageResponseTypes
     {
-        [EnumMember(Value = "default")] Default,
-        [EnumMember(Value = "primary")] Primary,
-        [EnumMember(Value = "danger")] Danger,
+        [EnumMember(Value = "ephemeral")] Ephemeral,
+        [EnumMember(Value = "in_channel")] InChannel,
     }
 }

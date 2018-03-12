@@ -2,7 +2,7 @@
 
 namespace LangBot.Web.Slack
 {
-    public interface IInteraction
+    public interface ISlackInteractionResponder
     {
         Task<SlackMessage> Respond(InteractionModel model);
     }

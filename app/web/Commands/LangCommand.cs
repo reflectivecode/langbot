@@ -4,7 +4,7 @@ using LangBot.Web.Slack;
 
 namespace LangBot.Web.Commands
 {
-    public class LangCommand : ICommand
+    public class LangCommand : ISlackCommandResponder
     {
         private readonly LangResponse _langResponse;
 

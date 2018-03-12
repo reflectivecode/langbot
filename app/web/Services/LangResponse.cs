@@ -113,7 +113,7 @@ namespace LangBot.Web.Services
 
             return new SlackMessage
             {
-                ResponseType = MessageResponseTypes.Ephemeral,
+                ResponseType = SlackMessageResponseTypes.Ephemeral,
                 Text = GetText(message),
                 Attachments = new[]
                 {
@@ -130,7 +130,7 @@ namespace LangBot.Web.Services
                         CallbackId = Constants.CallbackIds.Meme,
                         Color = "#3AA3E3",
                         MrkdwnIn = new[] { "text" },
-                        Actions = new IMessageAction []
+                        Actions = new ISlackMessageAction []
                         {
                             new SlackMessageButton
                             {
@@ -186,20 +186,20 @@ namespace LangBot.Web.Services
                             {
                                 Name = $"${Constants.ActionNames.Switch}:{message.Guid}",
                                 Text = "Next",
-                                Style = MessageButtonStyles.Default,
+                                Style = SlackMessageButtonStyles.Default,
                                 Value = templates.GetItemAfter(template).Id,
                             },
                             new SlackMessageButton
                             {
                                 Name = $"${Constants.ActionNames.Edit}:{message.Guid}",
                                 Text = "Edit",
-                                Style = MessageButtonStyles.Default,
+                                Style = SlackMessageButtonStyles.Default,
                             },
                             new SlackMessageButton
                             {
                                 Name = $"{Constants.ActionNames.Submit}:{message.Guid}",
                                 Text = "Post",
-                                Style = MessageButtonStyles.Primary
+                                Style = SlackMessageButtonStyles.Primary
                             },
                         }
                     }
@@ -252,7 +252,7 @@ namespace LangBot.Web.Services
 
             return Task.FromResult(new SlackMessage
             {
-                ResponseType = MessageResponseTypes.InChannel,
+                ResponseType = SlackMessageResponseTypes.InChannel,
                 Text = GetText(message),
                 Attachments = new List<SlackMessageAttachment>()
                 {
@@ -264,19 +264,19 @@ namespace LangBot.Web.Services
                     new SlackMessageAttachment
                     {
                         CallbackId = Constants.CallbackIds.Meme,
-                        Actions = new IMessageAction []
+                        Actions = new ISlackMessageAction []
                         {
                             new SlackMessageButton
                             {
                                 Name = $"{Constants.ActionNames.UpVote}:{message.Guid}",
                                 Text = ":+1: Like" + (message.UpVoteCount > 0 ? message.UpVoteCount.ToString("(#)") : ""),
-                                Style = MessageButtonStyles.Primary,
+                                Style = SlackMessageButtonStyles.Primary,
                             },
                             new SlackMessageButton
                             {
                                 Name = $"{Constants.ActionNames.Flag}:{message.Guid}",
                                 Text = "Flag",
-                                Style = MessageButtonStyles.Danger,
+                                Style = SlackMessageButtonStyles.Danger,
                             },
                         }
                     }

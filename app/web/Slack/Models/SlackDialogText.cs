@@ -1,6 +1,6 @@
 namespace LangBot.Web.Slack
 {
-    public class SlackDialogText : IDialogElement
+    public class SlackDialogText : ISlackDialogElement
     {
         public string Hint { get; set; }
         public string Label { get; set; }
@@ -9,8 +9,8 @@ namespace LangBot.Web.Slack
         public string Name { get; set; }
         public bool? Optional { get; set; }
         public string Placeholder { get; set; }
-        public DialogElementSunTypes? SubType { get; set; }
-        public DialogElementTypes Type => DialogElementTypes.Text;
+        public SlackDialogElementSubTypes? SubType { get; set; }
+        public SlackDialogElementTypes Type => SlackDialogElementTypes.Text;
         public string Value { get; set; }
     }
 }

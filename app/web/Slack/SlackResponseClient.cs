@@ -6,13 +6,13 @@ using Microsoft.Extensions.Logging;
 
 namespace LangBot.Web.Slack
 {
-    public class ResponseClient
+    public class SlackResponseClient
     {
         private readonly Serializer _serializer;
         private readonly ILogger _logger;
         private readonly HttpClient _httpClient;
 
-        public ResponseClient(Serializer serializer, ILogger<InteractionService> logger, HttpClient httpClient)
+        public SlackResponseClient(Serializer serializer, ILogger<SlackInteractionService> logger, HttpClient httpClient)
         {
             _serializer = serializer;
             _logger = logger;

@@ -8,15 +8,15 @@ namespace LangBot.Web.Controllers
     [Route("api/[controller]")]
     public class InteractionController : Controller
     {
-        private readonly InteractionService _service;
+        private readonly SlackInteractionService _service;
 
-        public InteractionController(InteractionService service)
+        public InteractionController(SlackInteractionService service)
         {
             _service = service;
         }
 
         [HttpPost]
-        public async Task<IRequestResponse> Post([FromForm] SlackInteractionRequest request)
+        public async Task<ISlackInteractionResponse> Post([FromForm] SlackInteractionRequest request)
         {
             var response = await _service.Respond(request);
             if (response.IsEmptyResponse())

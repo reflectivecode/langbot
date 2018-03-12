@@ -6,7 +6,7 @@ using LangBot.Web.Slack;
 
 namespace LangBot.Web.Interactions
 {
-    public class LangEditInteraction : IInteraction
+    public class LangEditInteraction : ISlackInteractionResponder
     {
         private readonly LangResponse _langResponse;
         private readonly Serializer _serializer;

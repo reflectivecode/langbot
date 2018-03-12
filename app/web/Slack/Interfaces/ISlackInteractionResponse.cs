@@ -1,8 +1,6 @@
-using System;
-
 namespace LangBot.Web.Slack
 {
-    public interface IRequestResponse
+    public interface ISlackInteractionResponse
     {
         bool IsEmptyResponse();
     }

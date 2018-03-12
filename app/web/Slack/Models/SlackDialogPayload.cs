@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace LangBot.Web.Slack
 {
-    public class SlackDialogPayload : IRequestPayload
+    public class SlackDialogPayload : ISlackInteractionPayload
     {
         public string CallbackId { get; set; }
         public IDictionary<string, string> Submission { get; set; }

@@ -1,12 +1,12 @@
 namespace LangBot.Web.Slack
 {
-    public interface IDialogElement
+    public interface ISlackDialogElement
     {
         string Label { get; }
         string Name { get; }
         bool? Optional { get; }
         string Placeholder { get; }
-        DialogElementTypes Type { get; }
+        SlackDialogElementTypes Type { get; }
         string Value { get; }
     }
 }

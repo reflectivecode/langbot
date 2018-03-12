@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 
 namespace LangBot.Web.Slack
 {
-    public class RequestPayloadConverter : BaseReadConverter<IRequestPayload>
+    public class SlackRequestPayloadConverter : SlackBaseReadConverter<ISlackInteractionPayload>
     {
         protected override Type GetObjectType(JObject jObject)
         {
