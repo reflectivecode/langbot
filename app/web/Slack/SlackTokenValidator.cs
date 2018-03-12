@@ -5,9 +5,9 @@ namespace LangBot.Web.Slack
 {
     public class SlackTokenValidator
     {
-        private readonly IOptions<Options> _options;
+        private readonly IOptions<SlackOptions> _options;
 
-        public SlackTokenValidator(IOptions<Options> options)
+        public SlackTokenValidator(IOptions<SlackOptions> options)
         {
             _options = options;
         }

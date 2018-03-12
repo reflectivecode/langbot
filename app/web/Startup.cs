@@ -53,7 +53,7 @@ namespace LangBot.Web
                 .Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Optimal)
                 .Configure<LangOptions>(_configuration.GetSection("Lang"))
                 .Configure<DatabaseOptions>(_configuration.GetSection("Database"))
-                .Configure<Slack.Options>(_configuration.GetSection("Slack"))
+                .Configure<Slack.SlackOptions>(_configuration.GetSection("Slack"))
                 .AddSingleton(new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Ignore,
