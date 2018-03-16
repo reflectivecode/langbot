@@ -19,6 +19,8 @@ namespace LangBot.Web.Models
             public string Name { get; set; }
             public int? Quality { get; set; }
             public TextBox Watermark { get; set; }
+            public int? GifPaletteSize { get; set; }
+            public string GifQuantizer { get; set; }
         }
     }
 }

@@ -18,6 +18,7 @@ using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Quantizers;
 using SixLabors.Primitives;
 
 namespace LangBot.Web.Services
@@ -205,12 +206,28 @@ namespace LangBot.Web.Services
                 case "BMP":
                     return new BmpEncoder();
                 case "GIF":
+                    var quantizer = CreateQuantizerFromString<Rgba32>(template.GifQuantizer ?? config.TemplateDefaults.GifQuantizer);
                     return new GifEncoder()
                     {
-                        IgnoreMetadata = true
+                        IgnoreMetadata = true,
+                        PaletteSize = template.GifPaletteSize ?? config.TemplateDefaults.GifPaletteSize ?? 0,
+                        Quantizer = quantizer,
                     };
                 default:
                     throw new ArgumentOutOfRangeException("format");
+            }
+        }
+
+        private static IQuantizer CreateQuantizerFromString<TPixel>(string quantizer) where TPixel : struct, IPixel<TPixel>
+        {
+            switch(quantizer?.ToLowerInvariant())
+            {
+                case "octree": return new OctreeQuantizer<TPixel>();
+                case "wu": return new WuQuantizer<TPixel>();
+                case "palette": return new PaletteQuantizer<TPixel>();
+                case "":
+                case null: return null;
+                default: throw new ArgumentOutOfRangeException(nameof(quantizer));
             }
         }
 
