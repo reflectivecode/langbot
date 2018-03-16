@@ -47,12 +47,14 @@ SELECT *,
 
 GO
 
-CREATE TABLE ResponseUrl
+CREATE TABLE PendingResponse
 (
     Id          INTEGER PRIMARY KEY,
+    MessageId   INTEGER NOT NULL,
     Guid        TEXT    NOT NULL CHECK(LENGTH(Guid) = 36),
     CreateDate  TEXT    NOT NULL,
-    ResponseUrl TEXT    NOT NULL
+    ResponseUrl TEXT    NOT NULL,
+    FOREIGN KEY (MessageId) REFERENCES MemeMessage(Id)
 );
 
-CREATE UNIQUE INDEX ix_ResponseUrl_Guid ON ResponseUrl(Guid);
+CREATE UNIQUE INDEX ix_PendingResponse_Guid ON PendingResponse(Guid);

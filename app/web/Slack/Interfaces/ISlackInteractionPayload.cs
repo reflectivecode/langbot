@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace LangBot.Web.Slack
 {
-    [JsonConverter(typeof(SlackRequestPayloadConverter))]
+    [JsonConverter(typeof(SlackInteractionPayloadConverter))]
     public interface ISlackInteractionPayload : ISlackRequest
     {
         string CallbackId { get; }

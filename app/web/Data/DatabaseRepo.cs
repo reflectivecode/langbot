@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using EnumsNET;
 using System;
 using System.Data;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ namespace LangBot.Web
         private const string MESSAGE_VIEW = "MemeMessageView";
         private const string MESSAGE_TABLE = "MemeMessage";
         private const string REACTION_TABLE = "Reaction";
+        private const string RESPONSE_TABLE = "Response";
 
         private static string Format(Guid guid) => guid.ToString("D");
         private static string Format(DateTime date) => date.ToString("u");
@@ -23,8 +25,8 @@ namespace LangBot.Web
 
         public async Task Test()
         {
-            await _connection.QueryAsync($"SELECT COUNT(1) FROM {EPHEMERAL_MESSAGE_TABLE};");
-            await _connection.QueryAsync($"SELECT COUNT(1) FROM {IN_CHANNEL_MESSAGE_TABLE};");
+            await _connection.QueryAsync($"SELECT COUNT(1) FROM {MESSAGE_VIEW};");
+            await _connection.QueryAsync($"SELECT COUNT(1) FROM {MESSAGE_TABLE};");
             await _connection.QueryAsync($"SELECT COUNT(1) FROM {REACTION_TABLE};");
         }
 
@@ -33,7 +35,7 @@ namespace LangBot.Web
             string teamDomain,
             string channelId,
             string channelName,
-            string channelType,
+            ChannelType channelType,
             string userId,
             string userName,
             string templateId,
@@ -45,12 +47,13 @@ namespace LangBot.Web
             if (teamDomain == null) throw new ArgumentNullException(nameof(teamDomain));
             if (channelId == null) throw new ArgumentNullException(nameof(channelId));
             if (channelName == null) throw new ArgumentNullException(nameof(channelName));
-            if (channelType == null) throw new ArgumentNullException(nameof(channelType));
             if (userId == null) throw new ArgumentNullException(nameof(userId));
             if (userName == null) throw new ArgumentNullException(nameof(userName));
             if (templateId == null) throw new ArgumentNullException(nameof(templateId));
             if (message == null) throw new ArgumentNullException(nameof(message));
             if (imageUrl == null) throw new ArgumentNullException(nameof(imageUrl));
+
+            channelType.Validate(nameof(channelType));
 
             var parameters = new
             {
@@ -60,7 +63,7 @@ namespace LangBot.Web
                 teamDomain,
                 channelId,
                 channelName,
-                channelType,
+                channelType = channelType.ToString(),
                 userId,
                 userName,
                 templateId,
@@ -270,6 +273,96 @@ namespace LangBot.Web
                         FROM {MESSAGE_VIEW}
                         WHERE {nameof(MemeMessage.Guid)} = @{nameof(parameters.guid)};", parameters, transaction);
             }
+        }
+
+        public async Task<Response> InsertResponse(
+            Guid messageGuid,
+            string responseUrl,
+            string teamId,
+            string teamDomain,
+            string channelId,
+            string channelName,
+            string userId,
+            string userName)
+        {
+            if (responseUrl == null) throw new ArgumentNullException(nameof(responseUrl));
+            if (teamId == null) throw new ArgumentNullException(nameof(teamId));
+            if (teamDomain == null) throw new ArgumentNullException(nameof(teamDomain));
+            if (channelId == null) throw new ArgumentNullException(nameof(channelId));
+            if (channelName == null) throw new ArgumentNullException(nameof(channelName));
+            if (userId == null) throw new ArgumentNullException(nameof(userId));
+            if (userName == null) throw new ArgumentNullException(nameof(userName));
+
+            var parameters = new
+            {
+                guid = Format(Guid.NewGuid()),
+                now = Format(DateTime.UtcNow),
+                messageGuid = Format(messageGuid),
+                responseUrl,
+                teamId,
+                teamDomain,
+                channelId,
+                channelName,
+                userId,
+                userName,
+            };
+
+            using (var transaction = _connection.BeginTransaction())
+            {
+                return await _connection.QuerySingleAsync<Response>($@"
+                    INSERT {RESPONSE_TABLE} (
+                        {nameof(Response.MessageGuid)},
+                        {nameof(Response.Guid)},
+                        {nameof(Response.CreateDate)},
+                        {nameof(Response.ResponseUrl)},
+                        {nameof(Response.TeamId)},
+                        {nameof(Response.TeamDomain)},
+                        {nameof(Response.ChannelId)},
+                        {nameof(Response.ChannelName)},
+                        {nameof(Response.UserId)},
+                        {nameof(Response.UserName)}
+                    ) VALUES (
+                        @{nameof(parameters.messageGuid)},
+                        @{nameof(parameters.guid)},
+                        @{nameof(parameters.now)},
+                        @{nameof(parameters.responseUrl)},
+                        @{nameof(parameters.teamId)},
+                        @{nameof(parameters.teamDomain)},
+                        @{nameof(parameters.channelId)},
+                        @{nameof(parameters.channelName)},
+                        @{nameof(parameters.userId)},
+                        @{nameof(parameters.userName)}
+                    );
+                    SELECT *
+                        FROM {RESPONSE_TABLE}
+                        WHERE {nameof(Response.Id)} = last_insert_rowid();", parameters, transaction);
+            }
+        }
+
+        public async Task<Response> SelectResponse(Guid guid)
+        {
+            var parameters = new
+            {
+                guid,
+            };
+
+            return await _connection.QuerySingleOrDefaultAsync<Response>($@"
+                SELECT *
+                    FROM {RESPONSE_TABLE}
+                    WHERE {nameof(Response.Guid)} = @{nameof(parameters.guid)};", parameters);
+        }
+
+        public async Task DeleteResponse(int responseId)
+        {
+            var parameters = new
+            {
+                responseId,
+            };
+
+            await _connection.ExecuteAsync($@"
+                DELETE
+                    FROM {RESPONSE_TABLE}
+                    WHERE {nameof(Response.Id)} = @{nameof(parameters.responseId)};", parameters);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace LangBot.Web.Slack
 {
-    public abstract class SlackApiBaseResponse : ISlackApiResponse
+    public class SlackApiBaseResponse : ISlackApiResponse
     {
         public string Error { get; set; }
         public bool Ok { get; set; }

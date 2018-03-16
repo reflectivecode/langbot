@@ -8,15 +8,15 @@ namespace LangBot.Web.Slack
     public class SlackInteractionService
     {
         private readonly SlackTokenValidator _tokenValidation;
-        private readonly IEnumerable<ISlackInteractionResponder> _interactions;
+        private readonly IEnumerable<ISlackActionResponder> _actions;
         private readonly IEnumerable<ISlackDialogResponder> _dialogs;
         private readonly Serializer _serializer;
         private readonly ILogger _logger;
 
-        public SlackInteractionService(SlackTokenValidator tokenValidation, IEnumerable<ISlackInteractionResponder> interactions, IEnumerable<ISlackDialogResponder> dialogs, Serializer serializer, ILogger<SlackInteractionService> logger)
+        public SlackInteractionService(SlackTokenValidator tokenValidation, IEnumerable<ISlackActionResponder> interactions, IEnumerable<ISlackDialogResponder> dialogs, Serializer serializer, ILogger<SlackInteractionService> logger)
         {
             _tokenValidation = tokenValidation;
-            _interactions = interactions;
+            _actions = interactions;
             _dialogs = dialogs;
             _serializer = serializer;
             _logger = logger;
@@ -30,8 +30,8 @@ namespace LangBot.Web.Slack
             var payload = _serializer.JsonToObject<ISlackInteractionPayload>(request.Payload);
             _tokenValidation.Validate(payload);
 
-            if (payload is SlackInteractionPayload)
-                return await HandleInteraction(payload as SlackInteractionPayload);
+            if (payload is SlackActionPayload)
+                return await HandleAction(payload as SlackActionPayload);
             else
                 return await HandleDialog(payload as SlackDialogPayload);
         }
@@ -52,13 +52,13 @@ namespace LangBot.Web.Slack
             throw new SlackException($"Unhandled dialog CallbackId: {payload.CallbackId}");
         }
 
-        public async Task<SlackMessage> HandleInteraction(SlackInteractionPayload payload)
+        public async Task<SlackMessage> HandleAction(SlackActionPayload payload)
         {
             if (payload == null) throw new System.ArgumentNullException(nameof(payload));
 
-            foreach (var interaction in _interactions)
+            foreach (var action in _actions)
             {
-                var result = await interaction.Respond(payload);
+                var result = await action.Respond(payload);
                 if (result != null)
                 {
                     _logger.LogDebug("Interaction response: {0}", _serializer.ObjectToJson(result));

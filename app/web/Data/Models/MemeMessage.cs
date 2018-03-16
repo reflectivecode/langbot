@@ -14,7 +14,7 @@ namespace LangBot.Web
         public string TeamDomain { get; set; }
         public string ChannelId { get; set; }
         public string ChannelName { get; set; }
-        public string ChannelType { get; set; }
+        public ChannelType ChannelType { get; set; }
         public string UserId { get; set; }
         public string UserName { get; set; }
         public string TemplateId { get; set; }
@@ -25,5 +25,15 @@ namespace LangBot.Web
         public string DeleteReason { get; set; }
         public int UpVoteCount { get; set; }
         public int FlagCount { get; set; }
+
+        public MessageState MessageState
+        {
+            get
+            {
+                if (DeleteDate.HasValue) return MessageState.Deleted;
+                if (PublishDate.HasValue) return MessageState.Published;
+                return MessageState.Preview;
+            }
+        }
     }
 }

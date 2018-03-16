@@ -51,7 +51,7 @@ namespace LangBot.Web.Services
             if (userName == null) throw new ArgumentNullException(nameof(userName));
             if (message == null) throw new ArgumentNullException(nameof(message));
 
-            var channelType = "unknown"; //TODO
+            var channelType = GetChannelType(channelId);
 
             var templates = await _templateService.GetTemplatesForUser(userId);
             var template = templates.FirstOrDefault(x => x.Default == true) ?? templates.First();
@@ -71,6 +71,19 @@ namespace LangBot.Web.Services
                 isAnonymous: false);
 
             return await RenderPreview(memeMessage);
+        }
+
+        private static ChannelType GetChannelType(string channelId)
+        {
+            if (channelId == null) throw new ArgumentNullException(nameof(channelId));
+
+            switch (channelId[0])
+            {
+                case 'C': return ChannelType.Public;
+                case 'G': return ChannelType.Private;
+                case 'D': return ChannelType.Direct;
+                default: return ChannelType.Unknown;
+            }
         }
 
         public async Task<SlackMessage> ChangeTemplate(Guid guid, bool isAnonymous)

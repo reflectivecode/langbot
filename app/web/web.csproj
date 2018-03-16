@@ -19,6 +19,7 @@
     <PackageReference Include="Boilerplate.AspNetCore" Version="3.0.0" />
     <PackageReference Include="Dapper" Version="1.50.4" />
     <PackageReference Include="dbup-sqlite" Version="4.0.0-beta0004" />
+    <PackageReference Include="Enums.NET" Version="2.3.1" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="2.0.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0002" />

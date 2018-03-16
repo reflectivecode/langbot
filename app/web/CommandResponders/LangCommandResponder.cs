@@ -2,13 +2,13 @@
 using LangBot.Web.Services;
 using LangBot.Web.Slack;
 
-namespace LangBot.Web.Commands
+namespace LangBot.Web
 {
-    public class LangCommand : ISlackCommandResponder
+    public class LangCommandResponder : ISlackCommandResponder
     {
         private readonly LangResponse _langResponse;
 
-        public LangCommand(LangResponse langResponse)
+        public LangCommandResponder(LangResponse langResponse)
         {
             _langResponse = langResponse;
         }
