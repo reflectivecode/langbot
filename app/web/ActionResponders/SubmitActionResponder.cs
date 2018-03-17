@@ -24,7 +24,9 @@ namespace LangBot.Web
 
             var updatedMessage = await DatabaseRepo.PublishMessage(message.Id);
             if (updatedMessage == null || updatedMessage.DeleteDate.HasValue) return await _langResponse.RenderDelete();
-            return await _langResponse.RenderPublished(message);
+            var result = await _langResponse.RenderPublished(message);
+            result.DeleteOriginal = true;
+            return result;
         }
     }
 }

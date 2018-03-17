@@ -40,19 +40,19 @@ namespace LangBot.Web.Services
                         Title = "This is a preview of your meme",
                         Text = "_hint: use a semicolon to separate lines of text_",
                         Fallback = "Here you would choose to confirm posting your meme",
-                        CallbackId = Constants.CallbackIds.Meme,
+                        CallbackId = $"{Constants.CallbackIds.Meme}:{message.Guid}",
                         Color = "#3AA3E3",
                         MrkdwnIn = new[] { "text" },
                         Actions = new ISlackMessageAction []
                         {
                             new SlackMessageButton
                             {
-                                Name = $"{Constants.ActionNames.Cancel}:{message.Guid}",
+                                Name = Constants.ActionNames.Cancel,
                                 Text = "Cancel",
                             },
                             new SlackMessageSelect
                             {
-                                Name = $"{Constants.ActionNames.Switch}:{message.Guid}",
+                                Name = Constants.ActionNames.Switch,
                                 Text = "Image",
                                 SelectedOptions = new[]
                                 {
@@ -97,20 +97,20 @@ namespace LangBot.Web.Services
                             },
                             new SlackMessageButton
                             {
-                                Name = $"${Constants.ActionNames.Switch}:{message.Guid}",
+                                Name = Constants.ActionNames.Switch,
                                 Text = "Next",
                                 Style = SlackMessageButtonStyles.Default,
                                 Value = templates.GetItemAfter(template).Id,
                             },
                             new SlackMessageButton
                             {
-                                Name = $"${Constants.ActionNames.Edit}:{message.Guid}",
+                                Name = Constants.ActionNames.Edit,
                                 Text = "Edit",
                                 Style = SlackMessageButtonStyles.Default,
                             },
                             new SlackMessageButton
                             {
-                                Name = $"{Constants.ActionNames.Submit}:{message.Guid}",
+                                Name = Constants.ActionNames.Submit,
                                 Text = "Post",
                                 Style = SlackMessageButtonStyles.Primary
                             },
@@ -137,18 +137,18 @@ namespace LangBot.Web.Services
                     },
                     new SlackMessageAttachment
                     {
-                        CallbackId = Constants.CallbackIds.Meme,
+                        CallbackId = $"{Constants.CallbackIds.Meme}:{message.Guid}",
                         Actions = new ISlackMessageAction []
                         {
                             new SlackMessageButton
                             {
-                                Name = $"{Constants.ActionNames.UpVote}:{message.Guid}",
+                                Name = Constants.ActionNames.UpVote,
                                 Text = ":+1: Like" + (message.UpVoteCount > 0 ? message.UpVoteCount.ToString("(#)") : ""),
                                 Style = SlackMessageButtonStyles.Primary,
                             },
                             new SlackMessageButton
                             {
-                                Name = $"{Constants.ActionNames.Flag}:{message.Guid}",
+                                Name = Constants.ActionNames.Flag,
                                 Text = "Flag",
                                 Style = SlackMessageButtonStyles.Danger,
                             },

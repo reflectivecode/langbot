@@ -23,10 +23,12 @@ namespace LangBot.Web
         {
             if (payload == null) throw new ArgumentNullException(nameof(payload));
 
-            if (payload.CallbackId != Constants.CallbackIds.Meme) return null;
-            if (String.IsNullOrEmpty(payload.ActionName)) return null;
-            if (!payload.ActionName.StartsWith(ActionName + ":")) return null;
-            var guid = Guid.Parse(ActionName.Substring(ActionName.Length + 1));
+            if (String.IsNullOrEmpty(payload.CallbackId)) return null;
+            if (!payload.CallbackId.StartsWith(Constants.CallbackIds.Meme + ":")) return null;
+
+            if (payload.ActionName != ActionName) return null;
+
+            var guid = Guid.Parse(payload.CallbackId.Substring(Constants.CallbackIds.Meme.Length + 1));
 
             var message = await DatabaseRepo.SelectMessage(guid);
             if (message == null) throw new SlackException("Message not found in database");

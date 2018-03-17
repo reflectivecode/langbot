@@ -5,7 +5,7 @@ namespace LangBot.Web
     public class MemeMessage
     {
         public int Id { get; set; }
-        public Guid Guid { get; set; }
+        public string Guid { get; set; }
         public DateTime CreateDate { get; set; }
         public DateTime UpdateDate { get; set; }
         public DateTime? PublishDate { get; set; }

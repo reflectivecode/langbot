@@ -56,6 +56,7 @@ namespace LangBot.Web
                 .Configure<LangOptions>(_configuration.GetSection("Lang"))
                 .Configure<DatabaseOptions>(_configuration.GetSection("Database"))
                 .Configure<Slack.SlackOptions>(_configuration.GetSection("Slack"))
+                .AddTransient<HttpClient>()
                 .AddSingleton(new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Ignore,

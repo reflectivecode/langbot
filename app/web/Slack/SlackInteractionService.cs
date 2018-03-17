@@ -66,7 +66,7 @@ namespace LangBot.Web.Slack
                     return result;
                 }
             }
-            throw new SlackException($"Unhandled interaction CallbackId: {payload.CallbackId}, ActionName: {payload.ActionName}");
+            throw new SlackException($"Unhandled action CallbackId: {payload.CallbackId}, ActionName: {payload.ActionName}");
         }
     }
 }

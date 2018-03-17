@@ -73,44 +73,41 @@ namespace LangBot.Web
                 isAnonymous,
             };
 
-            using (var transaction = _connection.BeginTransaction())
-            {
-                return await _connection.QuerySingleAsync<MemeMessage>($@"
-                    INSERT {MESSAGE_TABLE} (
-                        {nameof(MemeMessage.Guid)},
-                        {nameof(MemeMessage.CreateDate)},
-                        {nameof(MemeMessage.UpdateDate)},
-                        {nameof(MemeMessage.TeamId)},
-                        {nameof(MemeMessage.TeamDomain)},
-                        {nameof(MemeMessage.ChannelId)},
-                        {nameof(MemeMessage.ChannelName)},
-                        {nameof(MemeMessage.ChannelType)},
-                        {nameof(MemeMessage.UserId)},
-                        {nameof(MemeMessage.UserName)},
-                        {nameof(MemeMessage.TemplateId)},
-                        {nameof(MemeMessage.Message)},
-                        {nameof(MemeMessage.ImageUrl)},
-                        {nameof(MemeMessage.IsAnonymous)}
-                    ) VALUES (
-                        @{nameof(parameters.guid)},
-                        @{nameof(parameters.now)},
-                        @{nameof(parameters.now)},
-                        @{nameof(parameters.teamId)},
-                        @{nameof(parameters.teamDomain)},
-                        @{nameof(parameters.channelId)},
-                        @{nameof(parameters.channelName)},
-                        @{nameof(parameters.channelType)},
-                        @{nameof(parameters.userId)},
-                        @{nameof(parameters.userName)},
-                        @{nameof(parameters.templateId)},
-                        @{nameof(parameters.message)},
-                        @{nameof(parameters.imageUrl)},
-                        @{nameof(parameters.isAnonymous)}
-                    );
-                    SELECT *
-                        FROM {MESSAGE_VIEW}
-                        WHERE {nameof(MemeMessage.Id)} = last_insert_rowid();", parameters, transaction);
-            }
+            return await _connection.QuerySingleAsync<MemeMessage>($@"
+                INSERT INTO {MESSAGE_TABLE} (
+                    {nameof(MemeMessage.Guid)},
+                    {nameof(MemeMessage.CreateDate)},
+                    {nameof(MemeMessage.UpdateDate)},
+                    {nameof(MemeMessage.TeamId)},
+                    {nameof(MemeMessage.TeamDomain)},
+                    {nameof(MemeMessage.ChannelId)},
+                    {nameof(MemeMessage.ChannelName)},
+                    {nameof(MemeMessage.ChannelType)},
+                    {nameof(MemeMessage.UserId)},
+                    {nameof(MemeMessage.UserName)},
+                    {nameof(MemeMessage.TemplateId)},
+                    {nameof(MemeMessage.Message)},
+                    {nameof(MemeMessage.ImageUrl)},
+                    {nameof(MemeMessage.IsAnonymous)}
+                ) VALUES (
+                    @{nameof(parameters.guid)},
+                    @{nameof(parameters.now)},
+                    @{nameof(parameters.now)},
+                    @{nameof(parameters.teamId)},
+                    @{nameof(parameters.teamDomain)},
+                    @{nameof(parameters.channelId)},
+                    @{nameof(parameters.channelName)},
+                    @{nameof(parameters.channelType)},
+                    @{nameof(parameters.userId)},
+                    @{nameof(parameters.userName)},
+                    @{nameof(parameters.templateId)},
+                    @{nameof(parameters.message)},
+                    @{nameof(parameters.imageUrl)},
+                    @{nameof(parameters.isAnonymous)}
+                );
+                SELECT *
+                    FROM {MESSAGE_VIEW}
+                    WHERE {nameof(MemeMessage.Id)} = last_insert_rowid();", parameters);
         }
 
         public async Task<MemeMessage> SelectMessage(int id)
@@ -150,20 +147,17 @@ namespace LangBot.Web
                 isAnonymous,
             };
 
-            using (var transaction = _connection.BeginTransaction())
-            {
-                return await _connection.QuerySingleOrDefaultAsync<MemeMessage>($@"
-                    UPDATE {MESSAGE_TABLE}
-                        SET {nameof(MemeMessage.TemplateId)}  = IFNULL(@{nameof(parameters.templateId)},  {nameof(MemeMessage.TemplateId)})
-                           ,{nameof(MemeMessage.Message)}     = IFNULL(@{nameof(parameters.message)},     {nameof(MemeMessage.Message)})
-                           ,{nameof(MemeMessage.ImageUrl)}    = IFNULL(@{nameof(parameters.imageUrl)},    {nameof(MemeMessage.ImageUrl)})
-                           ,{nameof(MemeMessage.IsAnonymous)} = IFNULL(@{nameof(parameters.isAnonymous)}, {nameof(MemeMessage.IsAnonymous)})
-                        WHERE {nameof(MemeMessage.Id)}          = @{nameof(parameters.id)}
-                          AND {nameof(MemeMessage.PublishDate)} = NULL;
-                    SELECT *
-                        FROM {MESSAGE_VIEW}
-                        WHERE {nameof(MemeMessage.Id)} = @{nameof(parameters.id)};", parameters, transaction);
-            }
+            return await _connection.QuerySingleOrDefaultAsync<MemeMessage>($@"
+                UPDATE {MESSAGE_TABLE}
+                    SET {nameof(MemeMessage.TemplateId)}  = IFNULL(@{nameof(parameters.templateId)},  {nameof(MemeMessage.TemplateId)})
+                       ,{nameof(MemeMessage.Message)}     = IFNULL(@{nameof(parameters.message)},     {nameof(MemeMessage.Message)})
+                       ,{nameof(MemeMessage.ImageUrl)}    = IFNULL(@{nameof(parameters.imageUrl)},    {nameof(MemeMessage.ImageUrl)})
+                       ,{nameof(MemeMessage.IsAnonymous)} = IFNULL(@{nameof(parameters.isAnonymous)}, {nameof(MemeMessage.IsAnonymous)})
+                    WHERE {nameof(MemeMessage.Id)}          = @{nameof(parameters.id)}
+                      AND {nameof(MemeMessage.PublishDate)} IS NULL;
+                SELECT *
+                    FROM {MESSAGE_VIEW}
+                    WHERE {nameof(MemeMessage.Id)} = @{nameof(parameters.id)};", parameters);
         }
 
         public async Task DeletePreview(int id)
@@ -177,7 +171,7 @@ namespace LangBot.Web
                 DELETE
                     FROM {MESSAGE_TABLE}
                     WHERE {nameof(MemeMessage.Id)}          = @{nameof(parameters.id)}
-                      AND {nameof(MemeMessage.PublishDate)} = NULL", parameters);
+                      AND {nameof(MemeMessage.PublishDate)} IS NULL", parameters);
         }
 
         public async Task<MemeMessage> PublishMessage(int id)
@@ -188,18 +182,15 @@ namespace LangBot.Web
                 now = Format(DateTime.Now),
             };
 
-            using (var transaction = _connection.BeginTransaction())
-            {
-                return await _connection.QuerySingleOrDefaultAsync<MemeMessage>($@"
-                    UPDATE {MESSAGE_TABLE}
-                        SET {nameof(MemeMessage.PublishDate)} = @{nameof(parameters.now)}
-                        WHERE {nameof(MemeMessage.Id)}        = @{nameof(parameters.id)}
-                          AND {nameof(MemeMessage.PublishDate)} = NULL;
-                    SELECT *
-                        FROM {MESSAGE_VIEW}
-                        WHERE {nameof(MemeMessage.Id)}          = @{nameof(parameters.id)}
-                          AND {nameof(MemeMessage.PublishDate)} = @{nameof(parameters.now)}", parameters, transaction);
-            }
+            return await _connection.QuerySingleOrDefaultAsync<MemeMessage>($@"
+                UPDATE {MESSAGE_TABLE}
+                    SET {nameof(MemeMessage.PublishDate)} = @{nameof(parameters.now)}
+                    WHERE {nameof(MemeMessage.Id)}        = @{nameof(parameters.id)}
+                      AND {nameof(MemeMessage.PublishDate)} IS NULL;
+                SELECT *
+                    FROM {MESSAGE_VIEW}
+                    WHERE {nameof(MemeMessage.Id)}          = @{nameof(parameters.id)}
+                      AND {nameof(MemeMessage.PublishDate)} = @{nameof(parameters.now)}", parameters);
         }
 
         public async Task<bool> HasReacted(int messageId, string type, string userId)
@@ -238,28 +229,25 @@ namespace LangBot.Web
                 message,
             };
 
-            using (var transaction = _connection.BeginTransaction())
-            {
-                return await _connection.QuerySingleAsync<MemeMessage>($@"
-                    INSERT {REACTION_TABLE} (
-                        {nameof(Reaction.MessageId)},
-                        {nameof(Reaction.Type)},
-                        {nameof(Reaction.UserId)},
-                        {nameof(Reaction.UserName)},
-                        {nameof(Reaction.CreateDate)},
-                        {nameof(Reaction.Message)}
-                    ) VALUES (
-                        @{nameof(parameters.messageId)},
-                        @{nameof(parameters.type)},
-                        @{nameof(parameters.userId)},
-                        @{nameof(parameters.userName)},
-                        @{nameof(parameters.now)},
-                        @{nameof(parameters.message)}
-                    );
-                    SELECT *
-                        FROM {MESSAGE_VIEW}
-                        WHERE {nameof(MemeMessage.Id)} = @{nameof(parameters.messageId)};", parameters, transaction);
-            }
+            return await _connection.QuerySingleAsync<MemeMessage>($@"
+                INSERT INTO {REACTION_TABLE} (
+                    {nameof(Reaction.MessageId)},
+                    {nameof(Reaction.Type)},
+                    {nameof(Reaction.UserId)},
+                    {nameof(Reaction.UserName)},
+                    {nameof(Reaction.CreateDate)},
+                    {nameof(Reaction.Message)}
+                ) VALUES (
+                    @{nameof(parameters.messageId)},
+                    @{nameof(parameters.type)},
+                    @{nameof(parameters.userId)},
+                    @{nameof(parameters.userName)},
+                    @{nameof(parameters.now)},
+                    @{nameof(parameters.message)}
+                );
+                SELECT *
+                    FROM {MESSAGE_VIEW}
+                    WHERE {nameof(MemeMessage.Id)} = @{nameof(parameters.messageId)};", parameters);
         }
 
         public async Task<MemeMessage> RemoveReaction(int messageId, string type, string userId)
@@ -275,18 +263,15 @@ namespace LangBot.Web
                 userId,
             };
 
-            using (var transaction = _connection.BeginTransaction())
-            {
-                return await _connection.QuerySingleAsync<MemeMessage>($@"
-                    DELETE
-                        FROM {REACTION_TABLE}
-                        WHERE {nameof(Reaction.MessageId)} = @{nameof(parameters.messageId)}
-                          AND {nameof(Reaction.Type)}      = @{nameof(parameters.type)}
-                          AND {nameof(Reaction.UserId)}    = @{nameof(parameters.userId)};
-                    SELECT *
-                        FROM {MESSAGE_VIEW}
-                        WHERE {nameof(MemeMessage.Id)} = @{nameof(parameters.messageId)};", parameters, transaction);
-            }
+            return await _connection.QuerySingleAsync<MemeMessage>($@"
+                DELETE
+                    FROM {REACTION_TABLE}
+                    WHERE {nameof(Reaction.MessageId)} = @{nameof(parameters.messageId)}
+                      AND {nameof(Reaction.Type)}      = @{nameof(parameters.type)}
+                      AND {nameof(Reaction.UserId)}    = @{nameof(parameters.userId)};
+                SELECT *
+                    FROM {MESSAGE_VIEW}
+                    WHERE {nameof(MemeMessage.Id)} = @{nameof(parameters.messageId)};", parameters);
         }
 
         public async Task<Response> InsertResponse(
@@ -321,36 +306,33 @@ namespace LangBot.Web
                 userName,
             };
 
-            using (var transaction = _connection.BeginTransaction())
-            {
-                return await _connection.QuerySingleAsync<Response>($@"
-                    INSERT {RESPONSE_TABLE} (
-                        {nameof(Response.MessageId)},
-                        {nameof(Response.Guid)},
-                        {nameof(Response.CreateDate)},
-                        {nameof(Response.ResponseUrl)},
-                        {nameof(Response.TeamId)},
-                        {nameof(Response.TeamDomain)},
-                        {nameof(Response.ChannelId)},
-                        {nameof(Response.ChannelName)},
-                        {nameof(Response.UserId)},
-                        {nameof(Response.UserName)}
-                    ) VALUES (
-                        @{nameof(parameters.messageId)},
-                        @{nameof(parameters.guid)},
-                        @{nameof(parameters.now)},
-                        @{nameof(parameters.responseUrl)},
-                        @{nameof(parameters.teamId)},
-                        @{nameof(parameters.teamDomain)},
-                        @{nameof(parameters.channelId)},
-                        @{nameof(parameters.channelName)},
-                        @{nameof(parameters.userId)},
-                        @{nameof(parameters.userName)}
-                    );
-                    SELECT *
-                        FROM {RESPONSE_TABLE}
-                        WHERE {nameof(Response.Id)} = last_insert_rowid();", parameters, transaction);
-            }
+            return await _connection.QuerySingleAsync<Response>($@"
+                INSERT INTO {RESPONSE_TABLE} (
+                    {nameof(Response.MessageId)},
+                    {nameof(Response.Guid)},
+                    {nameof(Response.CreateDate)},
+                    {nameof(Response.ResponseUrl)},
+                    {nameof(Response.TeamId)},
+                    {nameof(Response.TeamDomain)},
+                    {nameof(Response.ChannelId)},
+                    {nameof(Response.ChannelName)},
+                    {nameof(Response.UserId)},
+                    {nameof(Response.UserName)}
+                ) VALUES (
+                    @{nameof(parameters.messageId)},
+                    @{nameof(parameters.guid)},
+                    @{nameof(parameters.now)},
+                    @{nameof(parameters.responseUrl)},
+                    @{nameof(parameters.teamId)},
+                    @{nameof(parameters.teamDomain)},
+                    @{nameof(parameters.channelId)},
+                    @{nameof(parameters.channelName)},
+                    @{nameof(parameters.userId)},
+                    @{nameof(parameters.userName)}
+                );
+                SELECT *
+                    FROM {RESPONSE_TABLE}
+                    WHERE {nameof(Response.Id)} = last_insert_rowid();", parameters);
         }
 
         public async Task<Response> SelectResponse(Guid guid)

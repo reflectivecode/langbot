@@ -37,7 +37,7 @@ CREATE TABLE Reaction
 CREATE        INDEX ix_Reaction_MessageId_Type        ON Reaction(MessageId, Type);
 CREATE UNIQUE INDEX ix_Reaction_MessageId_Type_UserId ON Reaction(MessageId, Type, UserId);
 
-CREATE TABLE PendingResponse
+CREATE TABLE Response
 (
     Id          INTEGER PRIMARY KEY,
     MessageId   INTEGER NOT NULL,
@@ -53,4 +53,4 @@ CREATE TABLE PendingResponse
     FOREIGN KEY (MessageId) REFERENCES MemeMessage(Id)
 );
 
-CREATE UNIQUE INDEX ix_PendingResponse_Guid ON PendingResponse(Guid);
+CREATE UNIQUE INDEX ix_Response_Guid ON Response(Guid);
