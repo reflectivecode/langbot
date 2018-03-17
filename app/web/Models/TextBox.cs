@@ -1,5 +1,4 @@
 using System.Drawing;
-using LangBot.Web.Enums;
 
 namespace LangBot.Web.Models
 {

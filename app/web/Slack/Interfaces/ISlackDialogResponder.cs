@@ -4,6 +4,6 @@ namespace LangBot.Web.Slack
 {
     public interface ISlackDialogResponder
     {
-        Task<SlackDialogResponse> Respond(SlackDialogPayload payload);
+        Task<ISlackDialogResponse> Respond(SlackDialogPayload payload);
     }
 }

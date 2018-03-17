@@ -14,14 +14,14 @@ namespace LangBot.Web
         private readonly ConfigService _configService;
         private readonly ImageUtility _imageUtility;
 
-        public SwitchActionResponder(DatabaseRepo databaseRepo, LangResponse langResponse, ConfigService configService, ImageUtility imageUtility):base(databaseRepo)
+        public SwitchActionResponder(DatabaseRepo databaseRepo, LangResponse langResponse, ConfigService configService, ImageUtility imageUtility) : base(databaseRepo)
         {
             _langResponse = langResponse;
             _configService = configService;
             _imageUtility = imageUtility;
         }
 
-        protected override async Task<SlackMessage> Respond(SlackActionPayload payload, MemeMessage message)
+        protected override async Task<ISlackActionResponse> Respond(SlackActionPayload payload, MemeMessage message)
         {
             if (payload == null) throw new ArgumentNullException(nameof(payload));
             if (message == null) throw new ArgumentNullException(nameof(message));
@@ -30,7 +30,7 @@ namespace LangBot.Web
             var imageUrl = await _imageUtility.GetImageUrl(message.Message, template);
 
             var updatedMessage = await DatabaseRepo.UpdatePreview(
-                guid: message.Guid,
+                id: message.Id,
                 templateId: template.Id,
                 message: message.Message,
                 imageUrl: imageUrl);

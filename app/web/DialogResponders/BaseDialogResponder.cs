@@ -17,9 +17,9 @@ namespace LangBot.Web
             DatabaseRepo = databaseRepo;
         }
 
-        protected abstract Task<SlackDialogResponse> Respond(SlackDialogPayload payload, MemeMessage message, Response response);
+        protected abstract Task<ISlackDialogResponse> Respond(SlackDialogPayload payload, MemeMessage message, Response response);
 
-        public async Task<SlackDialogResponse> Respond(SlackDialogPayload payload)
+        public async Task<ISlackDialogResponse> Respond(SlackDialogPayload payload)
         {
             if (payload == null) throw new ArgumentNullException(nameof(payload));
 
@@ -33,7 +33,7 @@ namespace LangBot.Web
             if (response.ChannelId != payload.Channel.Id) throw new SlackException("Invalid access. ChannelId does not match.");
             if (response.UserId != payload.User.Id) throw new SlackException("Invalid access. UserId does not match.");
 
-            var message = await DatabaseRepo.SelectMessage(response.MessageGuid);
+            var message = await DatabaseRepo.SelectMessage(response.MessageId);
             if (message == null) throw new SlackException("Message not found in database");
             if (!AllowedMessageStates.HasAnyFlags(message.MessageState)) throw new SlackException($"Message is not in a valid state for this action. Message state: {message.MessageState}, valid state: {AllowedMessageStates}");
             if (message.TeamId != payload.Team.Id) throw new SlackException("Invalid access. TeamId does not match.");

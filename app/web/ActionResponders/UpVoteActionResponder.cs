@@ -11,20 +11,18 @@ namespace LangBot.Web
         protected override MessageState AllowedMessageStates => MessageState.Published;
 
         private readonly LangResponse _langResponse;
-        private readonly DialogService _dialogService;
 
-        public UpVoteActionResponder(DatabaseRepo databaseRepo, LangResponse langResponse, DialogService dialogService): base(databaseRepo)
+        public UpVoteActionResponder(DatabaseRepo databaseRepo, LangResponse langResponse): base(databaseRepo)
         {
             _langResponse = langResponse;
-            _dialogService = dialogService;
         }
 
-        protected async override Task<SlackMessage> Respond(SlackActionPayload payload, MemeMessage message)
+        protected async override Task<ISlackActionResponse> Respond(SlackActionPayload payload, MemeMessage message)
         {
             if (payload == null) throw new ArgumentNullException(nameof(payload));
             if (message == null) throw new ArgumentNullException(nameof(message));
 
-            var alreadyUpvoted = await DatabaseRepo.HasReacted(message.Guid, Constants.Reactions.UpVote, payload.User.Id);
+            var alreadyUpvoted = await DatabaseRepo.HasReacted(message.Id, Constants.Reactions.UpVote, payload.User.Id);
             if (alreadyUpvoted)
                 return await RemoveVote(payload, message);
             else
@@ -36,7 +34,7 @@ namespace LangBot.Web
             if (payload == null) throw new ArgumentNullException(nameof(payload));
             if (message == null) throw new ArgumentNullException(nameof(message));
 
-            var updatedMessage = await DatabaseRepo.RemoveReaction(message.Guid, Constants.Reactions.UpVote, payload.User.Id);
+            var updatedMessage = await DatabaseRepo.RemoveReaction(message.Id, Constants.Reactions.UpVote, payload.User.Id);
             return await _langResponse.RenderPublished(updatedMessage);
         }
 
@@ -45,7 +43,7 @@ namespace LangBot.Web
             if (payload == null) throw new ArgumentNullException(nameof(payload));
             if (message == null) throw new ArgumentNullException(nameof(message));
 
-            var updatedMessage = await DatabaseRepo.AddReaction(message.Guid, Constants.Reactions.UpVote, payload.User.Id, payload.User.Name, null);
+            var updatedMessage = await DatabaseRepo.AddReaction(message.Id, Constants.Reactions.UpVote, payload.User.Id, payload.User.Name, null);
             return await _langResponse.RenderPublished(updatedMessage);
         }
     }

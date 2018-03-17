@@ -22,12 +22,20 @@ namespace LangBot.Web
             _textSplitter = textSplitter;
         }
 
-        protected override async Task<SlackMessage> Respond(SlackActionPayload payload, MemeMessage message)
+        protected override async Task<ISlackActionResponse> Respond(SlackActionPayload payload, MemeMessage message)
         {
             if (payload == null) throw new ArgumentNullException(nameof(payload));
             if (message == null) throw new ArgumentNullException(nameof(message));
 
-            var response = await DatabaseRepo.InsertResponse(message.Id, payload.ResponseUrl);
+            var response = await DatabaseRepo.InsertResponse(
+                messageId: message.Id,
+                responseUrl: payload.ResponseUrl,
+                teamId: payload.Team.Id,
+                teamDomain: payload.Team.Domain,
+                channelId: payload.Channel.Id,
+                channelName: payload.Channel.Name,
+                userId: payload.User.Id,
+                userName: payload.User.Name);
 
             var config = await _configService.GetConfig();
             var template = await _configService.GetTemplate(message.TemplateId, message.UserId);
@@ -74,6 +82,8 @@ namespace LangBot.Web
                     Elements = elements,
                 }
             });
+
+            return new SlackEmptyResponse();
         }
     }
 }

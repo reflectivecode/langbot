@@ -15,6 +15,7 @@ namespace LangBot.Web
 
         private static string Format(Guid guid) => guid.ToString("D");
         private static string Format(DateTime date) => date.ToString("u");
+        private static string Format(ChannelType type) => type.ToString();
 
         private readonly IDbConnection _connection;
 
@@ -63,7 +64,7 @@ namespace LangBot.Web
                 teamDomain,
                 channelId,
                 channelName,
-                channelType = channelType.ToString(),
+                channelType = Format(channelType),
                 userId,
                 userName,
                 templateId,
@@ -112,6 +113,19 @@ namespace LangBot.Web
             }
         }
 
+        public async Task<MemeMessage> SelectMessage(int id)
+        {
+            var parameters = new
+            {
+                id,
+            };
+
+            return await _connection.QuerySingleOrDefaultAsync<MemeMessage>($@"
+                SELECT *
+                    FROM {MESSAGE_VIEW}
+                    WHERE {nameof(MemeMessage.Id)} = @{nameof(parameters.id)}", parameters);
+        }
+
         public async Task<MemeMessage> SelectMessage(Guid guid)
         {
             var parameters = new
@@ -125,11 +139,11 @@ namespace LangBot.Web
                     WHERE {nameof(MemeMessage.Guid)} = @{nameof(parameters.guid)}", parameters);
         }
 
-        public async Task<MemeMessage> UpdatePreview(Guid guid, string templateId = null, string message = null, string imageUrl = null, bool? isAnonymous = null)
+        public async Task<MemeMessage> UpdatePreview(int id, string templateId = null, string message = null, string imageUrl = null, bool? isAnonymous = null)
         {
             var parameters = new
             {
-                guid = Format(guid),
+                id,
                 templateId,
                 message,
                 imageUrl,
@@ -144,33 +158,33 @@ namespace LangBot.Web
                            ,{nameof(MemeMessage.Message)}     = IFNULL(@{nameof(parameters.message)},     {nameof(MemeMessage.Message)})
                            ,{nameof(MemeMessage.ImageUrl)}    = IFNULL(@{nameof(parameters.imageUrl)},    {nameof(MemeMessage.ImageUrl)})
                            ,{nameof(MemeMessage.IsAnonymous)} = IFNULL(@{nameof(parameters.isAnonymous)}, {nameof(MemeMessage.IsAnonymous)})
-                        WHERE {nameof(MemeMessage.Guid)}        = @{nameof(parameters.guid)}
+                        WHERE {nameof(MemeMessage.Id)}          = @{nameof(parameters.id)}
                           AND {nameof(MemeMessage.PublishDate)} = NULL;
                     SELECT *
                         FROM {MESSAGE_VIEW}
-                        WHERE {nameof(MemeMessage.Guid)} = @{nameof(parameters.guid)};", parameters, transaction);
+                        WHERE {nameof(MemeMessage.Id)} = @{nameof(parameters.id)};", parameters, transaction);
             }
         }
 
-        public async Task DeletePreview(Guid guid)
+        public async Task DeletePreview(int id)
         {
             var parameters = new
             {
-                guid = Format(guid),
+                id,
             };
 
             await _connection.ExecuteAsync($@"
                 DELETE
                     FROM {MESSAGE_TABLE}
-                    WHERE {nameof(MemeMessage.Guid)}        = @{nameof(parameters.guid)}
+                    WHERE {nameof(MemeMessage.Id)}          = @{nameof(parameters.id)}
                       AND {nameof(MemeMessage.PublishDate)} = NULL", parameters);
         }
 
-        public async Task<MemeMessage> PublishMessage(Guid guid)
+        public async Task<MemeMessage> PublishMessage(int id)
         {
             var parameters = new
             {
-                guid = Format(guid),
+                id,
                 now = Format(DateTime.Now),
             };
 
@@ -179,23 +193,23 @@ namespace LangBot.Web
                 return await _connection.QuerySingleOrDefaultAsync<MemeMessage>($@"
                     UPDATE {MESSAGE_TABLE}
                         SET {nameof(MemeMessage.PublishDate)} = @{nameof(parameters.now)}
-                        WHERE {nameof(MemeMessage.Guid)}        = @{nameof(parameters.guid)}
+                        WHERE {nameof(MemeMessage.Id)}        = @{nameof(parameters.id)}
                           AND {nameof(MemeMessage.PublishDate)} = NULL;
                     SELECT *
                         FROM {MESSAGE_VIEW}
-                        WHERE {nameof(MemeMessage.Guid)}        = @{nameof(parameters.guid)}
+                        WHERE {nameof(MemeMessage.Id)}          = @{nameof(parameters.id)}
                           AND {nameof(MemeMessage.PublishDate)} = @{nameof(parameters.now)}", parameters, transaction);
             }
         }
 
-        public async Task<bool> HasReacted(Guid guid, string type, string userId)
+        public async Task<bool> HasReacted(int messageId, string type, string userId)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             if (userId == null) throw new ArgumentNullException(nameof(userId));
 
             var parameters = new
             {
-                guid = Format(guid),
+                messageId,
                 type,
                 userId,
             };
@@ -203,12 +217,12 @@ namespace LangBot.Web
             return await _connection.QuerySingleAsync<bool>($@"
                 SELECT COUNT(1)
                     FROM {REACTION_TABLE}
-                    WHERE {nameof(Reaction.Type)}        = @{nameof(parameters.type)}
-                      AND {nameof(Reaction.UserId)}      = @{nameof(parameters.userId)}
-                      AND {nameof(Reaction.MessageGuid)} = @{nameof(parameters.guid)};", parameters);
+                    WHERE {nameof(Reaction.Type)}      = @{nameof(parameters.type)}
+                      AND {nameof(Reaction.UserId)}    = @{nameof(parameters.userId)}
+                      AND {nameof(Reaction.MessageId)} = @{nameof(parameters.messageId)};", parameters);
         }
 
-        public async Task<MemeMessage> AddReaction(Guid guid, string type, string userId, string userName, string message)
+        public async Task<MemeMessage> AddReaction(int messageId, string type, string userId, string userName, string message)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             if (userId == null) throw new ArgumentNullException(nameof(userId));
@@ -216,7 +230,7 @@ namespace LangBot.Web
 
             var parameters = new
             {
-                guid = Format(guid),
+                messageId,
                 now = Format(DateTime.UtcNow),
                 type,
                 userId,
@@ -228,14 +242,14 @@ namespace LangBot.Web
             {
                 return await _connection.QuerySingleAsync<MemeMessage>($@"
                     INSERT {REACTION_TABLE} (
-                        {nameof(Reaction.MessageGuid)},
+                        {nameof(Reaction.MessageId)},
                         {nameof(Reaction.Type)},
                         {nameof(Reaction.UserId)},
                         {nameof(Reaction.UserName)},
                         {nameof(Reaction.CreateDate)},
                         {nameof(Reaction.Message)}
                     ) VALUES (
-                        @{nameof(parameters.guid)},
+                        @{nameof(parameters.messageId)},
                         @{nameof(parameters.type)},
                         @{nameof(parameters.userId)},
                         @{nameof(parameters.userName)},
@@ -244,18 +258,18 @@ namespace LangBot.Web
                     );
                     SELECT *
                         FROM {MESSAGE_VIEW}
-                        WHERE {nameof(MemeMessage.Guid)} = @{nameof(parameters.guid)};", parameters, transaction);
+                        WHERE {nameof(MemeMessage.Id)} = @{nameof(parameters.messageId)};", parameters, transaction);
             }
         }
 
-        public async Task<MemeMessage> RemoveReaction(Guid guid, string type, string userId)
+        public async Task<MemeMessage> RemoveReaction(int messageId, string type, string userId)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
             if (userId == null) throw new ArgumentNullException(nameof(userId));
 
             var parameters = new
             {
-                guid = Format(guid),
+                messageId,
                 now = Format(DateTime.UtcNow),
                 type,
                 userId,
@@ -266,17 +280,17 @@ namespace LangBot.Web
                 return await _connection.QuerySingleAsync<MemeMessage>($@"
                     DELETE
                         FROM {REACTION_TABLE}
-                        WHERE {nameof(Reaction.MessageGuid)} = @{nameof(parameters.guid)}
-                          AND {nameof(Reaction.Type)}        = @{nameof(parameters.type)}
-                          AND {nameof(Reaction.UserId)}      = @{nameof(parameters.userId)};
+                        WHERE {nameof(Reaction.MessageId)} = @{nameof(parameters.messageId)}
+                          AND {nameof(Reaction.Type)}      = @{nameof(parameters.type)}
+                          AND {nameof(Reaction.UserId)}    = @{nameof(parameters.userId)};
                     SELECT *
                         FROM {MESSAGE_VIEW}
-                        WHERE {nameof(MemeMessage.Guid)} = @{nameof(parameters.guid)};", parameters, transaction);
+                        WHERE {nameof(MemeMessage.Id)} = @{nameof(parameters.messageId)};", parameters, transaction);
             }
         }
 
         public async Task<Response> InsertResponse(
-            Guid messageGuid,
+            int messageId,
             string responseUrl,
             string teamId,
             string teamDomain,
@@ -297,7 +311,7 @@ namespace LangBot.Web
             {
                 guid = Format(Guid.NewGuid()),
                 now = Format(DateTime.UtcNow),
-                messageGuid = Format(messageGuid),
+                messageId,
                 responseUrl,
                 teamId,
                 teamDomain,
@@ -311,7 +325,7 @@ namespace LangBot.Web
             {
                 return await _connection.QuerySingleAsync<Response>($@"
                     INSERT {RESPONSE_TABLE} (
-                        {nameof(Response.MessageGuid)},
+                        {nameof(Response.MessageId)},
                         {nameof(Response.Guid)},
                         {nameof(Response.CreateDate)},
                         {nameof(Response.ResponseUrl)},
@@ -322,7 +336,7 @@ namespace LangBot.Web
                         {nameof(Response.UserId)},
                         {nameof(Response.UserName)}
                     ) VALUES (
-                        @{nameof(parameters.messageGuid)},
+                        @{nameof(parameters.messageId)},
                         @{nameof(parameters.guid)},
                         @{nameof(parameters.now)},
                         @{nameof(parameters.responseUrl)},
@@ -343,7 +357,7 @@ namespace LangBot.Web
         {
             var parameters = new
             {
-                guid,
+                guid = Format(guid),
             };
 
             return await _connection.QuerySingleOrDefaultAsync<Response>($@"

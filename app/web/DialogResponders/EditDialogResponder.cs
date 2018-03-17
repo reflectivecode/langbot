@@ -24,7 +24,7 @@ namespace LangBot.Web.Interactions
             _configService = configService;
         }
 
-        protected override async Task<SlackDialogResponse> Respond(SlackDialogPayload payload, MemeMessage message, Response response)
+        protected override async Task<ISlackDialogResponse> Respond(SlackDialogPayload payload, MemeMessage message, Response response)
         {
             if (payload == null) throw new ArgumentNullException(nameof(payload));
             if (message == null) throw new ArgumentNullException(nameof(message));
@@ -43,7 +43,7 @@ namespace LangBot.Web.Interactions
             var imageUrl = await _imageUtility.GetImageUrl(text.ToString(), template);
 
             var updatedMessage = await DatabaseRepo.UpdatePreview(
-                guid: message.Guid,
+                id: message.Id,
                 templateId: message.TemplateId,
                 message: text.ToString(),
                 imageUrl: imageUrl,

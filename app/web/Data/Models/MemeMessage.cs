@@ -10,6 +10,7 @@ namespace LangBot.Web
         public DateTime UpdateDate { get; set; }
         public DateTime? PublishDate { get; set; }
         public DateTime? DeleteDate { get; set; }
+        public string DeleteReason { get; set; }
         public string TeamId { get; set; }
         public string TeamDomain { get; set; }
         public string ChannelId { get; set; }
@@ -21,8 +22,6 @@ namespace LangBot.Web
         public string Message { get; set; }
         public string ImageUrl { get; set; }
         public bool IsAnonymous { get; set; }
-        public string Timestamp { get; set; }
-        public string DeleteReason { get; set; }
         public int UpVoteCount { get; set; }
         public int FlagCount { get; set; }
 

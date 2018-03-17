@@ -17,12 +17,12 @@ namespace LangBot.Web
             _langResponse = langResponse;
         }
 
-        protected async override Task<SlackMessage> Respond(SlackActionPayload payload, MemeMessage message)
+        protected async override Task<ISlackActionResponse> Respond(SlackActionPayload payload, MemeMessage message)
         {
             if (payload == null) throw new ArgumentNullException(nameof(payload));
             if (message == null) throw new ArgumentNullException(nameof(message));
 
-            var updatedMessage = await DatabaseRepo.PublishMessage(message.Guid);
+            var updatedMessage = await DatabaseRepo.PublishMessage(message.Id);
             if (updatedMessage == null || updatedMessage.DeleteDate.HasValue) return await _langResponse.RenderDelete();
             return await _langResponse.RenderPublished(message);
         }

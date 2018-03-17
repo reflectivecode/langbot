@@ -34,9 +34,10 @@ namespace LangBot.Web.Slack
                 return await HandleAction(payload as SlackActionPayload);
             else
                 return await HandleDialog(payload as SlackDialogPayload);
+
         }
 
-        public async Task<SlackDialogResponse> HandleDialog(SlackDialogPayload payload)
+        public async Task<ISlackDialogResponse> HandleDialog(SlackDialogPayload payload)
         {
             if (payload == null) throw new System.ArgumentNullException(nameof(payload));
 
@@ -52,7 +53,7 @@ namespace LangBot.Web.Slack
             throw new SlackException($"Unhandled dialog CallbackId: {payload.CallbackId}");
         }
 
-        public async Task<SlackMessage> HandleAction(SlackActionPayload payload)
+        public async Task<ISlackActionResponse> HandleAction(SlackActionPayload payload)
         {
             if (payload == null) throw new System.ArgumentNullException(nameof(payload));
 

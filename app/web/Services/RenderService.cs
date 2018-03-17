@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using LangBot.Web.Enums;
 using LangBot.Web.Models;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;

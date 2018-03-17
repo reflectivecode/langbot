@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace LangBot.Web.Slack
 {
-    public class SlackMessage : ISlackInteractionResponse
+    public class SlackMessage : ISlackActionResponse
     {
         public IList<SlackMessageAttachment> Attachments { get; set; }
         public bool? DeleteOriginal { get; set; }

@@ -5,7 +5,7 @@ namespace LangBot.Web
     public class Response
     {
         public int Id { get; set; }
-        public Guid MessageGuid { get; set; }
+        public int MessageId { get; set; }
         public string Guid { get; set; }
         public DateTime CreateDate { get; set; }
         public string ResponseUrl { get; set; }
