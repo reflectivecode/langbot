@@ -2,7 +2,6 @@ using Newtonsoft.Json;
 
 namespace LangBot.Web.Slack
 {
-    [JsonConverter(typeof(SlackMessageActionConverter))]
     public interface ISlackMessageAction
     {
         string Name { get; }

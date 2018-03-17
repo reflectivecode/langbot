@@ -2,12 +2,14 @@
 using System.Data;
 using System.IO;
 using System.IO.Compression;
+using System.Net.Http;
 using System.Reflection;
 using Boilerplate.AspNetCore;
 using Boilerplate.AspNetCore.Filters;
 using DbUp;
 using DbUp.SQLite.Helpers;
 using LangBot.Web.Models;
+using LangBot.Web.Slack;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -60,6 +62,11 @@ namespace LangBot.Web
                     ContractResolver = new DefaultContractResolver
                     {
                         NamingStrategy = new SnakeCaseNamingStrategy()
+                    },
+                    Converters =
+                    {
+                        new SlackMessageActionConverter(),
+                        new SlackInteractionPayloadConverter(),
                     }
                 })
                 .AddSingleton<IActionContextAccessor, ActionContextAccessor>()

@@ -7,7 +7,7 @@ namespace LangBot.Web.Slack
     {
         protected override Type GetObjectType(JObject jObject)
         {
-            var type = jObject["type"].Value<string>();
+            var type = jObject["type"]?.Value<string>();
             switch (type)
             {
                 case null: return typeof(SlackActionPayload);
