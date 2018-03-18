@@ -29,6 +29,11 @@ namespace LangBot.Tests
             Server.Dispose();
         }
 
+        protected T GetService<T>()
+        {
+            return (T)Server.Host.Services.GetService(typeof(T));
+        }
+
         public string Base64UrlEncode(object value)
         {
             var settings = new JsonSerializerSettings

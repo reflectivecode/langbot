@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using EnumsNET;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 
@@ -134,6 +135,14 @@ namespace LangBot.Web
                 SELECT *
                     FROM {MESSAGE_VIEW}
                     WHERE {nameof(MemeMessage.Guid)} = @{nameof(parameters.guid)}", parameters);
+        }
+
+        public async Task<IEnumerable<MemeMessage>> SelectAllMessages()
+        {
+            return await _connection.QueryAsync<MemeMessage>($@"
+                SELECT *
+                    FROM {MESSAGE_VIEW}
+                    ORDER BY {nameof(MemeMessage.Id)}");
         }
 
         public async Task<MemeMessage> UpdatePreview(int id, string templateId = null, string message = null, string imageUrl = null, bool? isAnonymous = null)
