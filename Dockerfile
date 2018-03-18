@@ -20,6 +20,6 @@ ENV PING=http://localhost/api/health
 
 EXPOSE 80
 
-CMD ["dotnet", "web.dll"]
+CMD ["dotnet", "LangBot.Web.dll"]
 
 HEALTHCHECK --interval=30s --timeout=1s CMD run-health.sh || exit 1
