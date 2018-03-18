@@ -12,7 +12,7 @@ RUN dotnet test tests \
 FROM microsoft/aspnetcore:2.0
 
 ENV ASPNETCORE_URLS=http://+:5000
-ENV PING=http://localhost/api/health
+ENV PING=http://localhost:5000/api/health
 ENV USER=langbot
 ENV GROUP=langbot
 ENV UID=2000

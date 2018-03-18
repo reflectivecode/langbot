@@ -41,7 +41,7 @@ namespace LangBot.Web
                 .AddJsonFile($"appsettings.{_hostingEnvironment.EnvironmentName}.json", optional: true)
                 // Note: Environment variables use a colon separator e.g. You can override the site title by creating a
                 // variable named AppSettings:SiteTitle. See http://docs.asp.net/en/latest/security/app-secrets.html
-                .AddEnvironmentVariables()
+                .AddEnvironmentVariables("LangBot:")
                 .Build();
 
             loggerFactory.AddConsole(_configuration.GetSection("Logging"));
