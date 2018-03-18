@@ -55,7 +55,7 @@ namespace LangBot.Web
                 .Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Optimal)
                 .Configure<LangOptions>(_configuration.GetSection("Lang"))
                 .Configure<DatabaseOptions>(_configuration.GetSection("Database"))
-                .Configure<Slack.SlackOptions>(_configuration.GetSection("Slack"))
+                .Configure<SlackOptions>(_configuration.GetSection("Slack"))
                 .AddTransient<HttpClient>()
                 .AddSingleton(new JsonSerializerSettings
                 {
@@ -128,7 +128,9 @@ namespace LangBot.Web
                 })
                 .UseHttpException()
                 .UseStatusCodePages()
-                .UseIfElse(_hostingEnvironment.IsDevelopment(), app => app.UseDeveloperExceptionPage(), app => app.UseInternalServerErrorOnException())
+                .UseIfElse(_hostingEnvironment.IsDevelopment(),
+                    app => app.UseDeveloperExceptionPage(),
+                    app => app.UseInternalServerErrorOnException().UseMiddleware<ExceptionLoggingMiddleware>())
                 .UseResponseCompression()
                 .UseMvc();
 
