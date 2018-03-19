@@ -15,11 +15,11 @@ namespace LangBot.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<ISlackInteractionResponse> Post([FromForm] SlackInteractionRequest request)
+        public async Task<ActionResult> Post([FromForm] SlackInteractionRequest request)
         {
             var response = await _service.Respond(request);
-            if (response.IsEmptyResponse()) return null;
-            return response;
+            if (response.IsEmptyResponse()) return Ok();
+            return Json(response);
         }
     }
 }
