@@ -10,7 +10,7 @@ namespace LangBot.Web.Services
     {
         private readonly ConfigService _configService;
 
-        private static string GetText(MemeMessage message) => (message.IsAnonymous ? "_anonymous_" : $"<@{message.UserId}>") + $" used `{Constants.Commands.Lang}`";
+        private static string GetText(MemeMessage message) => message.IsAnonymous ? null : $"<@{message.UserId}> used `{Constants.Commands.Lang}`";
 
         public LangResponse(ConfigService configService)
         {
