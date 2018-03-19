@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using LangBot.Web.Services;
@@ -83,8 +84,18 @@ namespace LangBot.Web.Slack
             if (url == null) throw new ArgumentNullException(nameof(url));
             if (content == null) throw new ArgumentNullException(nameof(content));
 
-            content.Headers.Add("Authorization", $"Bearer {OAuthToken}");
-            using (var response = await _httpClient.PostAsync(url, content))
+            var requestMessage = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(url),
+                Content = content,
+                Headers =
+                {
+                   Authorization = new AuthenticationHeaderValue("Bearer", OAuthToken)
+                }
+            };
+
+            using (var response = await _httpClient.SendAsync(requestMessage))
             {
                 if (!response.IsSuccessStatusCode) throw new SlackException($"Failed to post to response_url. Status code {response.StatusCode}");
                 var body = await response.Content.ReadAsStringAsync();
