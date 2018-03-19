@@ -49,7 +49,7 @@ namespace LangBot.Web.Interactions
                 isAnonymous: isAnonymous);
 
             var slackMessage = await _langResponse.RenderPreview(updatedMessage);
-
+            slackMessage.ReplaceOriginal = true;
             await _slackClient.SendMessageResponse(payload.ResponseUrl, slackMessage);
 
             return new SlackEmptyResponse();
