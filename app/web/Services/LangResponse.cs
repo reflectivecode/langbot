@@ -137,6 +137,7 @@ namespace LangBot.Web.Services
                     },
                     new SlackMessageAttachment
                     {
+                        Fallback = "Here you would respond to this post",
                         CallbackId = $"{Constants.CallbackIds.Meme}:{message.Guid}",
                         Actions = new ISlackMessageAction []
                         {
