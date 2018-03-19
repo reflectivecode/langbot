@@ -109,24 +109,6 @@ namespace LangBot.Tests
                                                 description = "(selected)"
                                             },
                                         }
-                                    },
-                                    new
-                                    {
-                                        text = "Change Anonymity",
-                                        options = new object []
-                                        {
-                                            new
-                                            {
-                                                text = "Include username",
-                                                value = "false",
-                                                description = "(selected)"
-                                            },
-                                            new
-                                            {
-                                                text = "Post anonymously",
-                                                value = "true",
-                                            }
-                                        }
                                     }
                                 },
                                 selected_options = new []
