@@ -26,7 +26,7 @@ namespace LangBot.Web
             if (String.IsNullOrEmpty(payload.CallbackId)) return null;
             if (!payload.CallbackId.StartsWith(CallbackName + ":")) return null;
 
-            var responseGuid = Guid.Parse(CallbackName.Substring(CallbackName.Length + 1));
+            var responseGuid = Guid.Parse(payload.CallbackId.Substring(CallbackName.Length + 1));
             var response = await DatabaseRepo.SelectResponse(responseGuid);
             if (response == null) throw new SlackException("Response id not found in database");
             if (response.TeamId != payload.Team.Id) throw new SlackException("Invalid access. TeamId does not match.");

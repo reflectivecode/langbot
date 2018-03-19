@@ -9,7 +9,7 @@ namespace LangBot.Web.Slack
         public bool? Optional { get; set; }
         public IList<SlackDialogOption> Options { get; set; }
         public string Placeholder { get; set; }
-        public SlackDialogElementTypes Type => SlackDialogElementTypes.Textarea;
+        public SlackDialogElementTypes Type => SlackDialogElementTypes.Select;
         public string Value { get; set; }
     }
 }
