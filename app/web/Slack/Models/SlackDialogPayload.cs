@@ -6,6 +6,7 @@ namespace LangBot.Web.Slack
     {
         public string CallbackId { get; set; }
         public SlackChannel Channel { get; set; }
+        public string ResponseUrl { get; set; }
         public IDictionary<string, string> Submission { get; set; }
         public SlackTeam Team { get; set; }
         public string Token { get; set; }
