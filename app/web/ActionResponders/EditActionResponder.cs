@@ -73,7 +73,7 @@ namespace LangBot.Web
 
             await _slackClient.DialogOpen(new SlackApiDialogOpenRequest
             {
-                TriggerId = payload.ActionTs,
+                TriggerId = payload.TriggerId,
                 Dialog = new SlackDialog
                 {
                     CallbackId = $"{Constants.CallbackIds.Edit}:{response.Guid}",

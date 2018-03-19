@@ -6,12 +6,12 @@ namespace LangBot.Web.Slack
     public class SlackActionPayload : ISlackInteractionPayload
     {
         public IList<ISlackMessageAction> Actions { get; set; }
-        public string ActionTs { get; set; }
         public string CallbackId { get; set; }
         public SlackChannel Channel { get; set; }
         public string ResponseUrl { get; set; }
         public SlackTeam Team { get; set; }
         public string Token { get; set; }
+        public string TriggerId { get; set; }
         public SlackUser User { get; set; }
 
         // Convenience Properties
