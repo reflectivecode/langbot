@@ -24,11 +24,10 @@ namespace LangBot.Web.Interactions
             _configService = configService;
         }
 
-        protected override async Task<ISlackDialogResponse> Respond(SlackDialogPayload payload, MemeMessage message, Response response)
+        protected override async Task<ISlackDialogResponse> Respond(SlackDialogPayload payload, MemeMessage message)
         {
             if (payload == null) throw new ArgumentNullException(nameof(payload));
             if (message == null) throw new ArgumentNullException(nameof(message));
-            if (response == null) throw new ArgumentNullException(nameof(response));
 
             var text = new StringBuilder();
             for (int i = 0; true; i++)
@@ -52,7 +51,6 @@ namespace LangBot.Web.Interactions
             var slackMessage = await _langResponse.RenderPreview(updatedMessage);
 
             await _slackClient.SendMessageResponse(payload.ResponseUrl, slackMessage);
-            await DatabaseRepo.DeleteResponse(response.Id);
 
             return new SlackEmptyResponse();
         }
