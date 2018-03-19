@@ -33,7 +33,7 @@ namespace LangBot.Web.Interactions
             var text = new StringBuilder();
             for (int i = 0; true; i++)
             {
-                if (!payload.Submission.TryGetValue($"line{0}", out var value)) break;
+                if (!payload.Submission.TryGetValue($"line{i}", out var value)) break;
                 if (i > 0) text.Append("; ");
                 text.Append(value);
             }
