@@ -144,15 +144,15 @@ namespace LangBot.Web.Services
                             new SlackMessageButton
                             {
                                 Name = Constants.ActionNames.UpVote,
-                                Text = ":+1: Like" + (message.UpVoteCount > 0 ? message.UpVoteCount.ToString("(#)") : ""),
+                                Text = ":+1: Like" + (message.UpVoteCount > 0 ? message.UpVoteCount.ToString(" (#)") : ""),
                                 Style = SlackMessageButtonStyles.Primary,
                             },
-                            new SlackMessageButton
-                            {
-                                Name = Constants.ActionNames.Flag,
-                                Text = "Flag",
-                                Style = SlackMessageButtonStyles.Danger,
-                            },
+                            //new SlackMessageButton
+                            //{
+                            //    Name = Constants.ActionNames.Flag,
+                            //    Text = "Flag",
+                            //    Style = SlackMessageButtonStyles.Danger,
+                            //},
                         }
                     }
                 },

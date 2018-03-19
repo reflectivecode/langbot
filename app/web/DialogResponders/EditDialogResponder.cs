@@ -54,7 +54,7 @@ namespace LangBot.Web.Interactions
             await _slackClient.SendMessageResponse(response.ResponseUrl, slackMessage);
             await DatabaseRepo.DeleteResponse(response.Id);
 
-            return new SlackDialogResponse();
+            return new SlackEmptyResponse();
         }
     }
 }
