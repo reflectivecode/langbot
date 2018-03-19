@@ -51,7 +51,8 @@ namespace LangBot.Web.Interactions
 
             var slackMessage = await _langResponse.RenderPreview(updatedMessage);
             slackMessage.ReplaceOriginal = true;
-            await _slackClient.SendMessageResponse(payload.ResponseUrl, slackMessage);
+
+            await _slackClient.SendMessageResponse(response.ResponseUrl, slackMessage);
             await DatabaseRepo.DeleteResponse(response.Id);
 
             return new SlackEmptyResponse();
