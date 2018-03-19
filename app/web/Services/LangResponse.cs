@@ -74,25 +74,6 @@ namespace LangBot.Web.Services
                                             Value = t.Id,
                                         }).ToList()
                                     },
-                                    new SlackMessageOptionGroup
-                                    {
-                                        Text = "Change Anonymity",
-                                        Options = new[]
-                                        {
-                                            new SlackMessageOption
-                                            {
-                                                Text = "Include username",
-                                                Description = message.IsAnonymous ? null : "(selected)",
-                                                Value = "false",
-                                            },
-                                            new SlackMessageOption
-                                            {
-                                                Text = "Post anonymously",
-                                                Description = message.IsAnonymous ? "(selected)" : null,
-                                                Value = "true",
-                                            },
-                                        }
-                                    },
                                 }
                             },
                             new SlackMessageButton
