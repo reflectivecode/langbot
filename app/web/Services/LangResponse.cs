@@ -126,7 +126,7 @@ namespace LangBot.Web.Services
                             {
                                 Name = Constants.ActionNames.UpVote,
                                 Text = ":+1: Like" + (message.UpVoteCount > 0 ? message.UpVoteCount.ToString(" (#)") : ""),
-                                Style = SlackMessageButtonStyles.Primary,
+                                Style = SlackMessageButtonStyles.Default,
                             },
                             //new SlackMessageButton
                             //{
