@@ -109,7 +109,7 @@ namespace LangBot.Web.Slack
         }
 
         public async Task<SlackApiTestResponse> ApiTest(SlackApiTestRequest request) => await PostJson<SlackApiTestResponse>("https://slack.com/api/api.test", request);
-        public async Task<SlackApiAuthTestResponse> AuthTest(SlackApiAuthTestRequest request) => await PostJson<SlackApiAuthTestResponse>("https://api.slack.com/methods/auth.test", request);
+        public async Task<SlackApiAuthTestResponse> AuthTest(SlackApiAuthTestRequest request) => await PostJson<SlackApiAuthTestResponse>("https://slack.com/api/auth.test", request);
         public async Task<SlackApiDialogOpenResponse> DialogOpen(SlackApiDialogOpenRequest request) => await PostJson<SlackApiDialogOpenResponse>("https://slack.com/api/dialog.open", request);
         public async Task SendMessageResponse(string responseUrl, SlackMessage message) => await PostJson<SlackApiBaseResponse>(responseUrl, message);
     }

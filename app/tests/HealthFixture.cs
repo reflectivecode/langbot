@@ -1,8 +1,7 @@
-using System;
 using Xunit;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Net;
+using Newtonsoft.Json.Linq;
 
 namespace LangBot.Tests
 {
@@ -12,8 +11,17 @@ namespace LangBot.Tests
         public async Task Returns_Ok()
         {
             var response = await Client.GetAsync("/api/health");
-            response.EnsureSuccessStatusCode();
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+
+            var actual = JObject.Parse(await response.Content.ReadAsStringAsync());
+            var expected = JObject.FromObject(new
+            {
+                database = true,
+                slack = false,
+                auth = false,
+            });
+            Assert.Equal(expected.ToString(), actual.ToString());
         }
     }
 }
