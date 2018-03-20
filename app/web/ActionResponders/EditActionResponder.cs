@@ -27,6 +27,16 @@ namespace LangBot.Web
             if (payload == null) throw new ArgumentNullException(nameof(payload));
             if (message == null) throw new ArgumentNullException(nameof(message));
 
+            var response = await DatabaseRepo.InsertResponse(
+                messageId: message.Id,
+                responseUrl: payload.ResponseUrl,
+                teamId: payload.Team.Id,
+                teamDomain: payload.Team.Domain,
+                channelId: payload.Channel.Id,
+                channelName: payload.Channel.Name,
+                userId: payload.User.Id,
+                userName: payload.User.Name);
+
             var config = await _configService.GetConfig();
             var template = await _configService.GetTemplate(message.TemplateId, message.UserId);
             var boxes = template.Boxes ?? config.TemplateDefaults.Boxes;
@@ -66,7 +76,7 @@ namespace LangBot.Web
                 TriggerId = payload.TriggerId,
                 Dialog = new SlackDialog
                 {
-                    CallbackId = $"{Constants.CallbackIds.Edit}:{message.Guid}",
+                    CallbackId = $"{Constants.CallbackIds.Edit}:{response.Guid}",
                     Title = "Edit",
                     SubmitLabel = "Preview",
                     Elements = elements,
