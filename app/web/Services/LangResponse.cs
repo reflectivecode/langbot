@@ -124,26 +124,26 @@ namespace LangBot.Web.Services
                         Fallback = message.Message,
                         ImageUrl = message.ImageUrl,
                     },
-                    new SlackMessageAttachment
-                    {
-                        Fallback = "Here you would respond to this post",
-                        CallbackId = $"{Constants.CallbackIds.Meme}:{message.Guid}",
-                        Actions = new ISlackMessageAction []
-                        {
-                            new SlackMessageButton
-                            {
-                                Name = Constants.ActionNames.UpVote,
-                                Text = ":+1: Like" + (message.UpVoteCount > 0 ? message.UpVoteCount.ToString(" (#)") : ""),
-                                Style = SlackMessageButtonStyles.Default,
-                            },
-                            //new SlackMessageButton
-                            //{
-                            //    Name = Constants.ActionNames.Flag,
-                            //    Text = "Flag",
-                            //    Style = SlackMessageButtonStyles.Danger,
-                            //},
-                        }
-                    }
+                    //new SlackMessageAttachment
+                    //{
+                    //    Fallback = "Here you would respond to this post",
+                    //    CallbackId = $"{Constants.CallbackIds.Meme}:{message.Guid}",
+                    //    Actions = new ISlackMessageAction []
+                    //    {
+                    //        new SlackMessageButton
+                    //        {
+                    //            Name = Constants.ActionNames.UpVote,
+                    //            Text = ":+1: Like" + (message.UpVoteCount > 0 ? message.UpVoteCount.ToString(" (#)") : ""),
+                    //            Style = SlackMessageButtonStyles.Default,
+                    //        },
+                    //        //new SlackMessageButton
+                    //        //{
+                    //        //    Name = Constants.ActionNames.Flag,
+                    //        //    Text = "Flag",
+                    //        //    Style = SlackMessageButtonStyles.Danger,
+                    //        //},
+                    //    }
+                    //}
                 },
             });
         }
