@@ -21,8 +21,10 @@ namespace LangBot.Web.Services
         {
             if (message == null) throw new ArgumentNullException(nameof(message));
 
+            var isPrivilegedUser = await _configService.IsPrivilegedUser(message.UserId);
             var template = await _configService.GetTemplate(message.TemplateId, message.UserId);
             var templates = await _configService.GetTemplatesForUser(message.UserId);
+
 
             return new SlackMessage
             {
@@ -87,6 +89,12 @@ namespace LangBot.Web.Services
                             {
                                 Name = Constants.ActionNames.Edit,
                                 Text = "Edit",
+                                Style = SlackMessageButtonStyles.Default,
+                            },
+                            !isPrivilegedUser ? null : new SlackMessageButton
+                            {
+                                Name = Constants.ActionNames.Raw,
+                                Text = "Raw Post",
                                 Style = SlackMessageButtonStyles.Default,
                             },
                             new SlackMessageButton

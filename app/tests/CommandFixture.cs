@@ -137,6 +137,7 @@ namespace LangBot.Tests
                                 text = "Edit",
                                 type = "button",
                             },
+                            null,
                             new
                             {
                                 name = "submit",
