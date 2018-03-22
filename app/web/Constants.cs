@@ -11,6 +11,7 @@ namespace LangBot.Web
         {
             public const string Meme = "meme";
             public const string Edit = "edit";
+            public const string Post = "post";
         }
 
         public static class DialogElements

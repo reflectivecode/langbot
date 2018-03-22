@@ -12,18 +12,23 @@ namespace LangBot.Web
         private readonly DatabaseRepo _databaseRepo;
         private readonly ConfigService _configService;
         private readonly ImageUtility _imageUtility;
+        private readonly Serializer _serializer;
 
-        public LangCommandResponder(LangResponse langResponse, DatabaseRepo databaseRepo, ConfigService configService, ImageUtility imageUtility)
+        public LangCommandResponder(LangResponse langResponse, DatabaseRepo databaseRepo, ConfigService configService, ImageUtility imageUtility, Serializer serializer)
         {
             _langResponse = langResponse;
             _databaseRepo = databaseRepo;
             _configService = configService;
             _imageUtility = imageUtility;
+            _serializer = serializer;
         }
 
         public async Task<SlackMessage> Respond(SlackCommandRequest command)
         {
             if (command.Command != Constants.Commands.Lang) return null;
+
+            if (await IsPostCommand(command))
+                return RenderPostPreview(command);
 
             var channelType = GetChannelType(command.ChannelId);
 
@@ -45,6 +50,46 @@ namespace LangBot.Web
                 isAnonymous: false);
 
             return await _langResponse.RenderPreview(message);
+        }
+
+        private async Task<bool> IsPostCommand(SlackCommandRequest command)
+        {
+            if (!command.Text.StartsWith('!')) return false;
+            var isPrivilegedUser = await _configService.IsPrivilegedUser(command.UserId);
+            if (!isPrivilegedUser) return false;
+            return true;
+        }
+
+        private SlackMessage RenderPostPreview(SlackCommandRequest command)
+        {
+            var message = command.Text.Substring(1);
+            return new SlackMessage
+            {
+                ResponseType = SlackMessageResponseTypes.Ephemeral,
+                Text = message,
+                Attachments = new []
+                {
+                    new SlackMessageAttachment
+                    {
+                        Fallback = "Approve message here",
+                        CallbackId = Constants.CallbackIds.Post,
+                        Actions = new[]
+                        {
+                            new SlackMessageButton
+                            {
+                                Name = Constants.ActionNames.Cancel,
+                                Text = "Cancel",
+                            },
+                            new SlackMessageButton
+                            {
+                                Name = Constants.ActionNames.Submit,
+                                Text = "Submit",
+                                Value = _serializer.ObjectToBase64Url(message)
+                            },
+                        }
+                    }
+                }
+            };
         }
 
         private static ChannelType GetChannelType(string channelId)
