@@ -31,7 +31,7 @@ CREATE TABLE Reaction
     UserName    TEXT    NOT NULL,
     CreateDate  TEXT    NOT NULL,
     Message     TEXT    NULL,
-    FOREIGN KEY (MessageId) REFERENCES MemeMessage(Id)
+    FOREIGN KEY (MessageId) REFERENCES MemeMessage(Id) ON DELETE CASCADE
 );
 
 CREATE        INDEX ix_Reaction_MessageId_Type        ON Reaction(MessageId, Type);
@@ -50,7 +50,7 @@ CREATE TABLE Response
     ChannelName TEXT    NOT NULL,
     UserId      TEXT    NOT NULL,
     UserName    TEXT    NOT NULL,
-    FOREIGN KEY (MessageId) REFERENCES MemeMessage(Id)
+    FOREIGN KEY (MessageId) REFERENCES MemeMessage(Id) ON DELETE CASCADE
 );
 
 CREATE UNIQUE INDEX ix_Response_Guid ON Response(Guid);
