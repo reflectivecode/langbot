@@ -28,7 +28,6 @@ namespace LangBot.Web
             public const string Cancel = "cancel";
             public const string Submit = "submit";
             public const string Switch = "switch";
-            public const string Raw = "raw";
         }
 
         public static class Reactions

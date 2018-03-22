@@ -43,14 +43,6 @@ namespace LangBot.Web.Services
             });
         }
 
-        public async Task<bool> IsPrivilegedUser(string userId)
-        {
-            if (userId == null) throw new ArgumentNullException(nameof(userId));
-
-            var config = await GetConfig();
-            return config.Privileged.Contains(userId);
-        }
-
         public async Task<IList<TemplateConfig.Template>> GetTemplatesForUser(string userId)
         {
             if (userId == null) throw new ArgumentNullException(nameof(userId));
