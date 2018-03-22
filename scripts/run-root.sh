@@ -4,7 +4,7 @@ set -o nounset
 
 if [ "${WAIT_FOR_FILE:-}" != "" ]; then
     echo "Checking for file ${WAIT_FOR_FILE}"
-    while [ ! -f "${WAIT_FOR_FILE}" ]; then
+    while [ ! -f "${WAIT_FOR_FILE}" ]; do
         echo "File not found, sleeping"
         sleep 10
     done
