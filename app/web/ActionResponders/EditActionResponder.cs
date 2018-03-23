@@ -44,7 +44,7 @@ namespace LangBot.Web
 
             var elements = lines.SelectWithIndex((line, i) => new SlackDialogText
             {
-                Label = $"Line {i}",
+                Label = String.IsNullOrEmpty(boxes[i].Label) ? $"Line {i + 1}" : boxes[i].Label,
                 Name = $"line{i}",
                 Optional = true,
                 Value = line,
