@@ -44,4 +44,4 @@ ENTRYPOINT ["/usr/local/bin/tini", "--"]
 
 CMD ["run-root.sh"]
 
-HEALTHCHECK --interval=30s --timeout=1s CMD run-health.sh || exit 1
+HEALTHCHECK --interval=60s --timeout=1s CMD run-health.sh || exit 1
