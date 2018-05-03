@@ -42,6 +42,7 @@ templates:
     name: Success Kid
     privileged: true
 templateDefaults:
+  font:    impact.ttf
   format:  jpg
   quality: 95
   boxes:

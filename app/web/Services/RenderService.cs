@@ -37,8 +37,8 @@ namespace LangBot.Web.Services
 
             var config = await _configService.GetConfig();
             var template = await _configService.GetTemplate(model.ImageId);
-            var imagePath = _configService.GetTemplatePath(template);
-            var fontPath = _configService.GetFontPath();
+            var imagePath = _configService.GetImagePath(template);
+            var fontPath = _configService.GetFontPath(template, config);
             var font = new FontCollection().Install(fontPath).CreateFont(10, FontStyle.Regular);
             var boxes = model.Boxes.Prepend(template.Watermark ?? config.TemplateDefaults.Watermark).ToList();
             var encoder = GetEncoder(template, config);

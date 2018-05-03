@@ -77,16 +77,19 @@ namespace LangBot.Web.Services
             return templates.FirstOrDefault(x => x.Id == templateId) ?? throw new SlackException($"Template id not found: {templateId}");
         }
 
-        public string GetTemplatePath(TemplateConfig.Template template)
+        public string GetImagePath(TemplateConfig.Template template)
         {
             if (template == null) throw new ArgumentNullException(nameof(template));
 
             return Path.Combine(_env.ContentRootPath, _options.Value.ImageDirectory, template.File);
         }
 
-        public string GetFontPath()
+        public string GetFontPath(TemplateConfig.Template template, TemplateConfig config)
         {
-            return Path.Combine(_env.ContentRootPath, _options.Value.FontPath);
+            if (template == null) throw new ArgumentNullException(nameof(template));
+            if (config == null) throw new ArgumentNullException(nameof(config));
+
+            return Path.Combine(_env.ContentRootPath, _options.Value.FontDirectory, template.Font ?? config.TemplateDefaults.Font);
         }
     }
 }

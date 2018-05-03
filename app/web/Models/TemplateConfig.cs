@@ -13,6 +13,7 @@ namespace LangBot.Web.Models
             public IList<TextBox> Boxes { get; set; }
             public bool? Default { get; set; }
             public string File { get; set; }
+            public string Font { get; set; }
             public string Format { get; set; }
             public string Id { get; set; }
             public bool Privileged { get; set; }
