@@ -1,10 +1,10 @@
 using System.Drawing;
-using LangBot.Web.Enums;
 
 namespace LangBot.Web.Models
 {
     public class TextBox
     {
+        public string Label { get; set; }
         public string Text { get; set; }
         public double X { get; set; }
         public double Y { get; set; }

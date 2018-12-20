@@ -1,3 +1,5 @@
+/app/.vs/
 /app/*/bin/
 /app/*/obj/
-*.Production.json
+/app/*/*.user
+*.db

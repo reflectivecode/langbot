@@ -1,11 +1,12 @@
 using System;
-using Xunit;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Net;
-using System.Collections.Generic;
-using Newtonsoft.Json;
+using LangBot.Web;
 using Newtonsoft.Json.Linq;
+using Xunit;
 
 namespace LangBot.Tests
 {
@@ -17,15 +18,23 @@ namespace LangBot.Tests
             var content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 { "token", "TestToken" },
-                { "user_id", "U2147483697" },
                 { "command", "/lang" },
                 { "text", "This is a test" },
+                { "user_id", "U2147483697" },
+                { "user_name", "test-user" },
+                { "channel_id", "C123" },
+                { "channel_name", "test-channel" },
+                { "team_id", "1" },
+                { "team_domain", "example.com" },
             });
 
             var response = await Client.PostAsync("/api/command", content);
 
             response.EnsureSuccessStatusCode();
             Assert.Equal(HttpStatusCode.OK, response.StatusCode); Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            var messageGuid = (await GetService<DatabaseRepo>().SelectAllMessages()).Last().Guid;
+
             var actual = JObject.Parse(await response.Content.ReadAsStringAsync());
             var imageUrl = String.Format("http://localhost/api/Image?Image={0}&Hash=1wkdvuo-3EdNW7H0xAibXIVmvY1TLNA2B5EGuQwHPj0", Base64UrlEncode(new
             {
@@ -81,22 +90,6 @@ namespace LangBot.Tests
                             new
                             {
                                 name = "switch",
-                                text = "Image",
-                                type = "select",
-                                selected_options = new []
-                                {
-                                    new
-                                    {
-                                        text = "One Does Not Simply",
-                                        value = Base64UrlEncode(new
-                                        {
-                                            text = "This is a test",
-                                            template_id = "one-does-not-simply",
-                                            user_id = "U2147483697",
-                                            anonymous = false
-                                        }),
-                                    }
-                                },
                                 option_groups = new []
                                 {
                                     new
@@ -107,59 +100,27 @@ namespace LangBot.Tests
                                             new
                                             {
                                                 text = "Distracted Boyfriend",
-                                                value = Base64UrlEncode(new
-                                                {
-                                                    text = "This is a test",
-                                                    template_id = "distracted-boyfriend",
-                                                    user_id = "U2147483697",
-                                                    anonymous = false
-                                                })
+                                                value = "distracted-boyfriend",
                                             },
                                             new
                                             {
                                                 text = "One Does Not Simply",
-                                                value = Base64UrlEncode(new
-                                                {
-                                                    text = "This is a test",
-                                                    template_id = "one-does-not-simply",
-                                                    user_id = "U2147483697",
-                                                    anonymous = false
-                                                }),
+                                                value = "one-does-not-simply",
                                                 description = "(selected)"
                                             },
-                                        }
-                                    },
-                                    new
-                                    {
-                                        text = "Change Anonymity",
-                                        options = new object []
-                                        {
-                                            new
-                                            {
-                                                text = "Include username",
-                                                value = Base64UrlEncode(new
-                                                {
-                                                    text = "This is a test",
-                                                    template_id = "one-does-not-simply",
-                                                    user_id = "U2147483697",
-                                                    anonymous = false
-                                                }),
-                                                description = "(selected)"
-                                            },
-                                            new
-                                            {
-                                                text = "Post anonymously",
-                                                value = Base64UrlEncode(new
-                                                {
-                                                    text = "This is a test",
-                                                    template_id = "one-does-not-simply",
-                                                    user_id = "U2147483697",
-                                                    anonymous = true
-                                                }),
-                                            }
                                         }
                                     }
-                                }
+                                },
+                                selected_options = new []
+                                {
+                                    new
+                                    {
+                                        text = "One Does Not Simply",
+                                        value = "one-does-not-simply",
+                                    }
+                                },
+                                text = "Image",
+                                type = "select",
                             },
                             new
                             {
@@ -167,13 +128,14 @@ namespace LangBot.Tests
                                 style = "default",
                                 text = "Next",
                                 type = "button",
-                                value = Base64UrlEncode(new
-                                {
-                                    text = "This is a test",
-                                    template_id = "distracted-boyfriend",
-                                    user_id = "U2147483697",
-                                    anonymous = false
-                                }),
+                                value = "distracted-boyfriend",
+                            },
+                            new
+                            {
+                                name = "edit",
+                                style = "default",
+                                text = "Edit",
+                                type = "button",
                             },
                             new
                             {
@@ -181,15 +143,9 @@ namespace LangBot.Tests
                                 style = "primary",
                                 text = "Post",
                                 type = "button",
-                                value = Base64UrlEncode(new
-                                {
-                                    image_url = imageUrl,
-                                    fallback = "This is a test",
-                                    user_id = "U2147483697"
-                                }),
                             },
                         },
-                        callback_id = "meme",
+                        callback_id = "meme:" + messageGuid,
                         color = "#3AA3E3",
                         fallback = "Here you would choose to confirm posting your meme",
                         mrkdwn_in = new[] { "text" },

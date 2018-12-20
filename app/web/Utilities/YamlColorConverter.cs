@@ -1,12 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 
-namespace LangBot.Web.Utilities
+namespace LangBot.Web
 {
     public class YamlColorConverter : IYamlTypeConverter
     {

@@ -1,187 +1,99 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Drawing;
 using System.Linq;
-using System.Runtime.Serialization;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Boilerplate.AspNetCore;
-using LangBot.Web.Enums;
-using LangBot.Web.Models;
 using LangBot.Web.Slack;
-using LangBot.Web.Utilities;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace LangBot.Web.Services
 {
     public class LangResponse
     {
-        private readonly IOptions<LangOptions> _options;
-        private readonly IUrlHelper _urlHelper;
-        private readonly TemplateService _templateService;
-        private readonly ImageUtility _imageUtility;
-        private readonly Serializer _serializer;
+        private readonly ConfigService _configService;
 
-        public LangResponse(IUrlHelper urlHelper, IOptions<LangOptions> options, TemplateService templateService, ImageUtility imageUtility, Serializer serializer)
+        private static string GetText(MemeMessage message) => message.IsAnonymous ? null : $"<@{message.UserId}> used `{Constants.Commands.Lang}`";
+
+        public LangResponse(ConfigService configService)
         {
-            _urlHelper = urlHelper;
-            _options = options;
-            _templateService = templateService;
-            _imageUtility = imageUtility;
-            _serializer = serializer;
+            _configService = configService;
         }
 
-        public async Task<Message> Preview(PreviewModel model)
+        public async Task<SlackMessage> RenderPreview(MemeMessage message)
         {
-            var config = await _templateService.GetTemplates();
-            var isPrivilegedUser = config.Privileged.Contains(model.UserId);
-            var templates = config.Templates.Where(t => isPrivilegedUser || !t.Privileged).ToList();
-            var template = GetTemplate(templates, model.TemplateId);
-            var boxes = template.Boxes ?? config.TemplateDefaults.Boxes;
-            var textLines = SplitText(model.Text.ToUpper(), boxes.Count);
+            if (message == null) throw new ArgumentNullException(nameof(message));
 
-            var imageModel = new ImageModel
+            var template = await _configService.GetTemplate(message.TemplateId, message.UserId);
+            var templates = await _configService.GetTemplatesForUser(message.UserId);
+
+            return new SlackMessage
             {
-                ImageId = template.Id,
-                Boxes = boxes.SelectWithIndex((box, i) => new TextBox
-                {
-                    Text = textLines[i],
-                    X = box.X,
-                    Y = box.Y,
-                    Width = box.Width,
-                    Height = box.Height,
-                    Vertical = box.Vertical,
-                    Horizontal = box.Horizontal,
-                    LineColor = box.LineColor,
-                    FillColor = box.FillColor,
-                }).ToList()
-            };
-
-            var imageRequest = _imageUtility.CreateRequest(imageModel);
-            var imageUrl = _urlHelper.AbsoluteAction("Get", "Image", imageRequest);
-
-            return new Message
-            {
-                ResponseType = MessageResponseTypes.Ephemeral,
-                Text = model.Anonymous ? null : $"<@{model.UserId}> used `{Constants.Commands.Lang}`",
+                ResponseType = SlackMessageResponseTypes.Ephemeral,
+                Text = GetText(message),
                 Attachments = new[]
                 {
-                    new MessageAttachment
+                    new SlackMessageAttachment
                     {
-                        ImageUrl = imageUrl,
-                        Fallback = model.Text,
+                        ImageUrl = message.ImageUrl,
+                        Fallback = message.Message,
                     },
-                    new MessageAttachment
+                    new SlackMessageAttachment
                     {
                         Title = "This is a preview of your meme",
                         Text = "_hint: use a semicolon to separate lines of text_",
                         Fallback = "Here you would choose to confirm posting your meme",
-                        CallbackId = Constants.CallbackIds.Meme,
+                        CallbackId = $"{Constants.CallbackIds.Meme}:{message.Guid}",
                         Color = "#3AA3E3",
                         MrkdwnIn = new[] { "text" },
-                        Actions = new IMessageAction []
+                        Actions = new ISlackMessageAction []
                         {
-                            new MessageButton
+                            new SlackMessageButton
                             {
-                                Name = "cancel",
+                                Name = Constants.ActionNames.Cancel,
                                 Text = "Cancel",
                             },
-                            new MessageSelect
+                            new SlackMessageSelect
                             {
-                                Name = "switch",
+                                Name = Constants.ActionNames.Switch,
                                 Text = "Image",
                                 SelectedOptions = new[]
                                 {
-                                     new MessageOption
+                                     new SlackMessageOption
                                     {
                                         Text = template.Name,
-                                        Value = _serializer.ObjectToBase64Url(new PreviewModel
-                                        {
-                                            TemplateId = template.Id,
-                                            Text = model.Text,
-                                            UserId = model.UserId,
-                                            Anonymous = model.Anonymous,
-                                        })
+                                        Value = template.Id,
                                     }
                                 },
                                 OptionGroups = new[]
                                 {
-                                    new MessageOptionGroup
+                                    new SlackMessageOptionGroup
                                     {
                                         Text = "Change Image",
-                                        Options = templates.Select(t => new MessageOption
+                                        Options = templates.Select(t => new SlackMessageOption
                                         {
                                             Text = t.Name,
                                             Description = t == template ? "(selected)" : null,
-                                            Value = _serializer.ObjectToBase64Url(new PreviewModel
-                                            {
-                                                TemplateId = t.Id,
-                                                Text = model.Text,
-                                                UserId = model.UserId,
-                                                Anonymous = model.Anonymous,
-                                            })
+                                            Value = t.Id,
                                         }).ToList()
-                                    },
-                                    new MessageOptionGroup
-                                    {
-                                        Text = "Change Anonymity",
-                                        Options = new[]
-                                        {
-                                            new MessageOption
-                                            {
-                                                Text = "Include username",
-                                                Description = model.Anonymous ? null : "(selected)",
-                                                Value = _serializer.ObjectToBase64Url(new PreviewModel
-                                                {
-                                                    TemplateId = template.Id,
-                                                    Text = model.Text,
-                                                    UserId = model.UserId,
-                                                    Anonymous = false,
-                                                }),
-                                            },
-                                            new MessageOption
-                                            {
-                                                Text = "Post anonymously",
-                                                Description = model.Anonymous ? "(selected)" : null,
-                                                Value = _serializer.ObjectToBase64Url(new PreviewModel
-                                                {
-                                                    TemplateId = template.Id,
-                                                    Text = model.Text,
-                                                    UserId = model.UserId,
-                                                    Anonymous = true,
-                                                }),
-                                            },
-                                        }
                                     },
                                 }
                             },
-                            new MessageButton
+                            new SlackMessageButton
                             {
-                                Name = "switch",
+                                Name = Constants.ActionNames.Switch,
                                 Text = "Next",
-                                Style = MessageButtonStyles.Default,
-                                Value = _serializer.ObjectToBase64Url(new PreviewModel
-                                {
-                                    TemplateId = templates.GetItemAfter(template).Id,
-                                    Text = model.Text,
-                                    UserId = model.UserId,
-                                    Anonymous = model.Anonymous,
-                                })
+                                Style = SlackMessageButtonStyles.Default,
+                                Value = templates.GetItemAfter(template).Id,
                             },
-                            new MessageButton
+                            new SlackMessageButton
                             {
-                                Name = "submit",
+                                Name = Constants.ActionNames.Edit,
+                                Text = "Edit",
+                                Style = SlackMessageButtonStyles.Default,
+                            },
+                            new SlackMessageButton
+                            {
+                                Name = Constants.ActionNames.Submit,
                                 Text = "Post",
-                                Style = MessageButtonStyles.Primary,
-                                Value = _serializer.ObjectToBase64Url(new SubmitModel
-                                {
-                                    ImageUrl = imageUrl,
-                                    Fallback = model.Text,
-                                    UserId = model.Anonymous ?  null : model.UserId,
-                                }),
+                                Style = SlackMessageButtonStyles.Primary
                             },
                         }
                     }
@@ -189,129 +101,51 @@ namespace LangBot.Web.Services
             };
         }
 
-        private TemplateConfig.Template GetTemplate(IList<TemplateConfig.Template> templates, string id)
+        public Task<SlackMessage> RenderPublished(MemeMessage message)
         {
-            if (String.IsNullOrEmpty(id)) return templates.FirstOrDefault(x => x.Default == true) ?? templates.First();
-            var template = templates.FirstOrDefault(t => t.Id == id);
-            if (template == null) throw new SlackException($"Template not found: {id}");
-            return template;
-        }
+            if (message == null) throw new ArgumentNullException(nameof(message));
 
-        public Task<Message> Submit(SubmitModel model)
-        {
-            return Task.FromResult(new Message
+            return Task.FromResult(new SlackMessage
             {
-                DeleteOriginal = true,
-                ResponseType = MessageResponseTypes.InChannel,
-                Text = model.UserId == null ? null : $"<@{model.UserId}> used `{Constants.Commands.Lang}`",
-                Attachments = new List<MessageAttachment>()
+                ResponseType = SlackMessageResponseTypes.InChannel,
+                Text = GetText(message),
+                Attachments = new List<SlackMessageAttachment>()
                 {
-                    new MessageAttachment
+                    new SlackMessageAttachment
                     {
-                        Fallback = model.Fallback,
-                        ImageUrl = model.ImageUrl,
+                        Fallback = message.Message,
+                        ImageUrl = message.ImageUrl,
                     },
+                    //new SlackMessageAttachment
+                    //{
+                    //    Fallback = "Here you would respond to this post",
+                    //    CallbackId = $"{Constants.CallbackIds.Meme}:{message.Guid}",
+                    //    Actions = new ISlackMessageAction []
+                    //    {
+                    //        new SlackMessageButton
+                    //        {
+                    //            Name = Constants.ActionNames.UpVote,
+                    //            Text = ":+1: Like" + (message.UpVoteCount > 0 ? message.UpVoteCount.ToString(" (#)") : ""),
+                    //            Style = SlackMessageButtonStyles.Default,
+                    //        },
+                    //        //new SlackMessageButton
+                    //        //{
+                    //        //    Name = Constants.ActionNames.Flag,
+                    //        //    Text = "Flag",
+                    //        //    Style = SlackMessageButtonStyles.Danger,
+                    //        //},
+                    //    }
+                    //}
                 },
             });
         }
 
-        public Task<Message> Cancel()
+        public Task<SlackMessage> RenderDelete()
         {
-            return Task.FromResult(new Message
+            return Task.FromResult(new SlackMessage
             {
                 DeleteOriginal = true,
             });
-        }
-
-        private static readonly Regex _whitespace = new Regex(@"\s+", RegexOptions.Compiled);
-
-        private IList<string> SplitText(string text, int count)
-        {
-            if (text == null) throw new ArgumentNullException(nameof(text));
-
-            text = _whitespace.Replace(text, " ").Trim();
-
-            if (count == 1)
-                return new[] { text };
-
-            if (text.Contains(";"))
-                return text.Split(';', count).TrimAll().PadToLength(count, "");
-
-            var words = _whitespace.Split(text);
-            if (words.Length <= count) return words.PadToLength(count, "");
-
-            TextLineStack best = null;
-            long bestCost = long.MaxValue;
-            foreach (var stack in AllSplits(words, count))
-            {
-                var cost = stack.Cost;
-                if (cost < bestCost)
-                {
-                    best = stack;
-                    bestCost = cost;
-                }
-            }
-
-            return best.GetLines().PadToLength(count, "");
-        }
-
-        private IEnumerable<TextLineStack> AllSplits(ArraySegment<string> words, int groupCount)
-        {
-            if (groupCount == 1)
-            {
-                yield return new TextLineStack(new TextLine(words));
-                yield break;
-            }
-
-            for (int take = 1; take <= words.Count - groupCount + 1; take++)
-            {
-                var line = new TextLine(words.Slice(0, take));
-                foreach (var tail in AllSplits(words.Slice(take), groupCount - 1))
-                    yield return new TextLineStack(line, tail);
-            }
-        }
-
-        private class TextLine
-        {
-            private readonly ArraySegment<string> _segment;
-
-            public int Length { get; }
-
-            public override string ToString() => String.Join(" ", _segment);
-
-            public TextLine(ArraySegment<string> segment)
-            {
-                _segment = segment;
-                Length = segment.Sum(x => x.Length) + segment.Count - 1;
-            }
-
-            public long Cost(int longestLine)
-            {
-                long deficit = longestLine - Length;
-                return deficit * deficit;
-            }
-        }
-
-        private class TextLineStack
-        {
-            private readonly ImmutableStack<TextLine> _stack;
-
-            public int LongestLine { get; }
-
-            public long Cost { get => _stack.Sum(x => x.Cost(LongestLine)); }
-            public IList<string> GetLines() => _stack.Select(x => x.ToString()).ToList();
-
-            public TextLineStack(TextLine line)
-            {
-                _stack = ImmutableStack.Create(line);
-                LongestLine = line.Length;
-            }
-
-            public TextLineStack(TextLine line, TextLineStack stack)
-            {
-                _stack = stack._stack.Push(line);
-                LongestLine = Math.Max(line.Length, stack.LongestLine);
-            }
         }
     }
 }

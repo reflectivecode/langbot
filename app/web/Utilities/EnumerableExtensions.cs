@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LangBot.Web.Utilities
+namespace LangBot.Web
 {
     public static class EnumerableExtensions
     {

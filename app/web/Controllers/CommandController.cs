@@ -8,15 +8,15 @@ namespace LangBot.Web.Controllers
     [Route("api/[controller]")]
     public class CommandController : Controller
     {
-        private readonly CommandService _service;
+        private readonly SlackCommandService _service;
 
-        public CommandController(CommandService service)
+        public CommandController(SlackCommandService service)
         {
             _service = service;
         }
 
         [HttpPost]
-        public async Task<Message> Post([FromForm] CommandRequest request)
+        public async Task<SlackMessage> Post([FromForm] SlackCommandRequest request)
         {
             return await _service.Respond(request);
         }

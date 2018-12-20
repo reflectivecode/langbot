@@ -2,11 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Threading.Tasks;
-using LangBot.Web.Enums;
 using LangBot.Web.Models;
-using LangBot.Web.Slack;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing;
@@ -27,21 +24,21 @@ namespace LangBot.Web.Services
     {
         private const float outlineSize = 1.0f;
 
-        private readonly TemplateService _templateService;
+        private readonly ConfigService _configService;
 
-        public RenderService(TemplateService templateService)
+        public RenderService(ConfigService configService)
         {
-            _templateService = templateService;
+            _configService = configService;
         }
 
         public async Task<(byte[] data, string mimeType)> Render(ImageModel model)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
 
-            var config = await _templateService.GetTemplates();
-            var template = config.Templates.FirstOrDefault(x => x.Id == model.ImageId) ?? throw new SlackException($"Template id not found: {model.ImageId}");
-            var imagePath = _templateService.GetTemplatePath(template);
-            var fontPath = _templateService.GetFontPath();
+            var config = await _configService.GetConfig();
+            var template = await _configService.GetTemplate(model.ImageId);
+            var imagePath = _configService.GetImagePath(template);
+            var fontPath = _configService.GetFontPath(template, config);
             var font = new FontCollection().Install(fontPath).CreateFont(10, FontStyle.Regular);
             var boxes = model.Boxes.Prepend(template.Watermark ?? config.TemplateDefaults.Watermark).ToList();
             var encoder = GetEncoder(template, config);

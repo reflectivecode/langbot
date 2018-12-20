@@ -42,10 +42,12 @@ templates:
     name: Success Kid
     privileged: true
 templateDefaults:
+  font:    impact.ttf
   format:  jpg
   quality: 95
   boxes:
     -
+      label:      Top
       x:          5
       y:          2.5
       width:      90
@@ -55,6 +57,7 @@ templateDefaults:
       lineColor:  Black
       fillColor:  White
     -
+      label:      Bottom
       x:          5
       y:          72.5
       width:      90

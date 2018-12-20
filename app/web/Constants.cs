@@ -6,16 +6,34 @@ namespace LangBot.Web
         {
             public const string Lang = "/lang";
         }
+
         public static class CallbackIds
         {
             public const string Meme = "meme";
+            public const string Edit = "edit";
+            public const string Post = "post";
+        }
+
+        public static class DialogElements
+        {
+            public const string Anonymous = "anonymous";
+            public const string Text = "text";
         }
 
         public static class ActionNames
         {
+            public const string UpVote = "up-vote";
+            public const string Flag = "flag";
+            public const string Edit = "edit";
             public const string Cancel = "cancel";
             public const string Submit = "submit";
             public const string Switch = "switch";
+        }
+
+        public static class Reactions
+        {
+            public const string UpVote = "up-vote";
+            public const string Flag = "flag";
         }
     }
 }
