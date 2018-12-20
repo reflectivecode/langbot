@@ -6,13 +6,14 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using LangBot.Web;
 using Newtonsoft.Json.Linq;
-using Xunit;
+using NUnit.Framework;
 
 namespace LangBot.Tests
 {
+    [TestFixture]
     public class CommandFixture : BaseFixture
     {
-        [Fact]
+        [Test]
         public async Task Lang_Returns_Correct_Data()
         {
             var content = new FormUrlEncodedContent(new Dictionary<string, string>
@@ -31,7 +32,8 @@ namespace LangBot.Tests
             var response = await Client.PostAsync("/api/command", content);
 
             response.EnsureSuccessStatusCode();
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode); Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
             var messageGuid = (await GetService<DatabaseRepo>().SelectAllMessages()).Last().Guid;
 
@@ -156,7 +158,7 @@ namespace LangBot.Tests
                 response_type = "ephemeral",
                 text = "<@U2147483697> used `/lang`"
             });
-            Assert.Equal(expected.ToString(), actual.ToString());
+            Assert.AreEqual(expected.ToString(), actual.ToString());
         }
     }
 }
