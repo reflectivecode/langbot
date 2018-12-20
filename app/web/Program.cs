@@ -65,6 +65,7 @@ namespace LangBot.Web
             catch (Exception e)
             {
                 logger.LogError(e, "Error preparing database");
+                throw;
             }
         }
 
