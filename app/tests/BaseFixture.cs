@@ -3,7 +3,6 @@ using System.IO;
 using System.Net.Http;
 using System.Text;
 using LangBot.Web;
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Newtonsoft.Json;
@@ -19,7 +18,9 @@ namespace LangBot.Tests
         public BaseFixture()
         {
             var path = Path.GetFullPath("../../../../web");
-            Server = new TestServer(WebHost.CreateDefaultBuilder().UseContentRoot(path).UseEnvironment("Development").UseStartup<Startup>());
+            var host = Program.CreateWebHostBuilder(null).UseContentRoot(path).UseEnvironment("Development");
+            Server = new TestServer(host);
+            Program.MigrateDatabase(Server.Host);
             Client = Server.CreateClient();
         }
 

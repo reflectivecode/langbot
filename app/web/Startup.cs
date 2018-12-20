@@ -1,13 +1,9 @@
-﻿using System;
-using System.Data;
-using System.IO;
+﻿using System.Data;
 using System.IO.Compression;
 using System.Net.Http;
-using System.Reflection;
 using Boilerplate.AspNetCore;
 using Boilerplate.AspNetCore.Filters;
-using DbUp;
-using DbUp.SQLite.Helpers;
+using DbUp.Engine.Output;
 using LangBot.Web.Models;
 using LangBot.Web.Slack;
 using Microsoft.AspNetCore.Builder;
@@ -28,21 +24,13 @@ namespace LangBot.Web
 {
     public class Startup
     {
+        private readonly IConfiguration _configuration;
         private readonly IHostingEnvironment _hostingEnvironment;
-        private readonly IConfigurationRoot _configuration;
 
-        public Startup(IHostingEnvironment hostingEnvironment)
+        public Startup(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
+            _configuration = configuration;
             _hostingEnvironment = hostingEnvironment;
-
-            _configuration = new ConfigurationBuilder()
-                .SetBasePath(_hostingEnvironment.ContentRootPath)
-                .AddJsonFile("appsettings.json")
-                .AddJsonFile($"appsettings.{_hostingEnvironment.EnvironmentName}.json", optional: true)
-                // Note: Environment variables use a colon separator e.g. You can override the site title by creating a
-                // variable named AppSettings:SiteTitle. See http://docs.asp.net/en/latest/security/app-secrets.html
-                .AddEnvironmentVariables("LangBot:")
-                .Build();
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -68,6 +56,7 @@ namespace LangBot.Web
                         new SlackInteractionPayloadConverter(),
                     }
                 })
+                .AddTransient<IUpgradeLog, UpgradeLog>()
                 .AddSingleton<IActionContextAccessor, ActionContextAccessor>()
                 .AddTransient(serviceProvider =>
                 {
@@ -117,7 +106,7 @@ namespace LangBot.Web
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder application, IApplicationLifetime lifetime)
+        public void Configure(IApplicationBuilder application)
         {
             application
                 .UseNoServerHttpHeader()
@@ -132,25 +121,6 @@ namespace LangBot.Web
                     app => app.UseInternalServerErrorOnException().UseMiddleware<ExceptionLoggingMiddleware>())
                 .UseResponseCompression()
                 .UseMvc();
-
-            lifetime.ApplicationStarted.Register(() =>
-            {
-                var options = application.ApplicationServices.GetRequiredService<IOptions<DatabaseOptions>>();
-                if (!String.IsNullOrEmpty(options.Value.DeleteOnStart))
-                    File.Delete(options.Value.DeleteOnStart);
-
-                var connection = application.ApplicationServices.GetRequiredService<IDbConnection>();
-                var shared = new SharedConnection(connection);
-                var upgrader = DeployChanges.To
-                            .SQLiteDatabase(shared)
-                            .WithScriptsEmbeddedInAssembly(Assembly.GetExecutingAssembly())
-                            .LogToConsole()
-                            .Build();
-
-                var result = upgrader.PerformUpgrade();
-                if (!result.Successful)
-                    throw result.Error;
-            });
         }
     }
 }
