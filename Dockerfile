@@ -1,5 +1,5 @@
 # build application
-FROM microsoft/dotnet:2.2-sdk AS build-env
+FROM microsoft/dotnet:2.2-sdk-alpine AS build-env
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ RUN dotnet test tests \
  && dotnet publish -c Release -o out
 
 # build runtime image
-FROM microsoft/dotnet:2.2-aspnetcore-runtime
+FROM microsoft/dotnet:2.2-aspnetcore-runtime-alpine
 
 ENV ASPNETCORE_URLS=http://+:5000
 ENV PING=http://localhost:5000/api/health
@@ -21,26 +21,18 @@ ENV HOME=/home/langbot
 
 WORKDIR /app
 
-RUN echo "add ${USER} user" \
- && groupadd --system --gid "${GID}" "${GROUP}" \
- && useradd --system --uid "${UID}" --home-dir "${HOME}" --create-home --gid "${GID}" "${USER}" \
- && echo "install packages" \
- && apt-get --quiet update \
- && apt-get install --yes --no-install-recommends \
-      gosu \
- && rm -rf /var/lib/apt/lists/* \
- && echo "install tini" \
- && curl --silent --show-error --location --output /usr/local/bin/tini "https://github.com/krallin/tini/releases/download/v0.17.0/tini-amd64" \
- && echo "2ad381b0ff2ebd7a5b161c0d2d1a730ce419ed048b89d50acf1e9059a822961c /usr/local/bin/tini" | sha256sum --check - \
- && chmod +x /usr/local/bin/tini \
- && tini -s true
+RUN apk add --no-cache \
+      su-exec \
+      tini \
+ && addgroup -g "${GID}" -S "${GROUP}" \
+ && adduser -u "${UID}" -D -S -G "${GROUP}" "${USER}"
 
 COPY --from=build-env /app/web/out ./
 COPY scripts /usr/local/bin/
 
 EXPOSE 5000
 
-ENTRYPOINT ["/usr/local/bin/tini", "--"]
+ENTRYPOINT ["/sbin/tini", "--"]
 
 CMD ["run-root.sh"]
 
