@@ -13,13 +13,13 @@ using LangBot.Web.Slack;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -31,7 +31,7 @@ namespace LangBot.Web
         private readonly IHostingEnvironment _hostingEnvironment;
         private readonly IConfigurationRoot _configuration;
 
-        public Startup(IHostingEnvironment hostingEnvironment, ILoggerFactory loggerFactory)
+        public Startup(IHostingEnvironment hostingEnvironment)
         {
             _hostingEnvironment = hostingEnvironment;
 
@@ -43,8 +43,6 @@ namespace LangBot.Web
                 // variable named AppSettings:SiteTitle. See http://docs.asp.net/en/latest/security/app-secrets.html
                 .AddEnvironmentVariables("LangBot:")
                 .Build();
-
-            loggerFactory.AddConsole(_configuration.GetSection("Logging"));
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -91,6 +89,7 @@ namespace LangBot.Web
                 {
                     config.Filters.Add(new ValidateModelStateAttribute());
                 })
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddJsonOptions(config =>
                 {
                     config.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;

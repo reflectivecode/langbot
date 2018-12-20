@@ -6,16 +6,14 @@ using System.Threading.Tasks;
 using LangBot.Web.Models;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Drawing;
-using SixLabors.ImageSharp.Drawing.Brushes;
-using SixLabors.ImageSharp.Drawing.Pens;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Bmp;
 using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Quantizers;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Processing.Processors.Quantization;
 using SixLabors.Primitives;
 
 namespace LangBot.Web.Services
@@ -83,18 +81,27 @@ namespace LangBot.Web.Services
                     var drawLocation = GetLocation(box, boxBounds, textBounds);
 
                     // draw outline
-                    context.DrawText(box.Text, scaledFont, pen, drawLocation, new TextGraphicsOptions(true)
-                    {
-                        WrapTextWidth = wrapWidth,
-                        HorizontalAlignment = ConvertHorizontalAlignment(box.Horizontal),
-                    });
+                    context.DrawText(
+                        new TextGraphicsOptions(true)
+                        {
+                            WrapTextWidth = wrapWidth,
+                            HorizontalAlignment = ConvertHorizontalAlignment(box.Horizontal),
+                        },
+                        box.Text,
+                        scaledFont,
+                        pen,
+                        drawLocation);
 
                     // draw fill
-                    context.DrawText(box.Text, scaledFont, brush, drawLocation, new TextGraphicsOptions(true)
-                    {
-                        WrapTextWidth = wrapWidth,
-                        HorizontalAlignment = ConvertHorizontalAlignment(box.Horizontal),
-                    });
+                    context.DrawText(new TextGraphicsOptions(true)
+                        {
+                            WrapTextWidth = wrapWidth,
+                            HorizontalAlignment = ConvertHorizontalAlignment(box.Horizontal),
+                        },
+                        box.Text,
+                        scaledFont,
+                        brush,
+                        drawLocation);
                 }
             });
         }
@@ -196,18 +203,16 @@ namespace LangBot.Web.Services
                         Quality = template.Quality ?? config.TemplateDefaults.Quality ?? 90
                     };
                 case "PNG":
-                    return new PngEncoder()
-                    {
-                        IgnoreMetadata = true
-                    };
+                    return new PngEncoder();
                 case "BMP":
                     return new BmpEncoder();
                 case "GIF":
-                    var quantizer = CreateQuantizerFromString<Rgba32>(template.GifQuantizer ?? config.TemplateDefaults.GifQuantizer);
+                    var gifQuantizer = template.GifQuantizer ?? config.TemplateDefaults.GifQuantizer;
+                    var paletteSize = template.GifPaletteSize ?? config.TemplateDefaults.GifPaletteSize ?? 0;
+                    var quantizer = CreateQuantizerFromString(gifQuantizer, paletteSize);
                     return new GifEncoder()
                     {
                         IgnoreMetadata = true,
-                        PaletteSize = template.GifPaletteSize ?? config.TemplateDefaults.GifPaletteSize ?? 0,
                         Quantizer = quantizer,
                     };
                 default:
@@ -215,13 +220,13 @@ namespace LangBot.Web.Services
             }
         }
 
-        private static IQuantizer CreateQuantizerFromString<TPixel>(string quantizer) where TPixel : struct, IPixel<TPixel>
+        private static IQuantizer CreateQuantizerFromString(string quantizer, int paletteSize)
         {
-            switch(quantizer?.ToLowerInvariant())
+            switch (quantizer?.ToLowerInvariant())
             {
-                case "octree": return new OctreeQuantizer<TPixel>();
-                case "wu": return new WuQuantizer<TPixel>();
-                case "palette": return new PaletteQuantizer<TPixel>();
+                case "octree": return new OctreeQuantizer(paletteSize);
+                case "wu": return new WuQuantizer(paletteSize);
+                case "palette": return new PaletteQuantizer();
                 case "":
                 case null: return null;
                 default: throw new ArgumentOutOfRangeException(nameof(quantizer));

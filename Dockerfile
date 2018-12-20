@@ -1,5 +1,5 @@
 # build application
-FROM microsoft/aspnetcore-build:2.0 AS build-env
+FROM microsoft/dotnet:2.2-sdk AS build-env
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ RUN dotnet test tests \
  && dotnet publish -c Release -o out
 
 # build runtime image
-FROM microsoft/aspnetcore:2.0
+FROM microsoft/dotnet:2.2-aspnetcore-runtime
 
 ENV ASPNETCORE_URLS=http://+:5000
 ENV PING=http://localhost:5000/api/health
